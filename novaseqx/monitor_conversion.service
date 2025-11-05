@@ -1,0 +1,15 @@
+[Unit]
+Description=Start the service to monitor for ready conversions on the NovaSeq X to upload files to gcp
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/monitor_conversion_ready.sh
+Restart=always
+RestartSec=5
+WorkingDirectory=~/ENTER-WORKING-DIR
+StandardOutput=append:~/ENTER-WORKING-DIR/monitor_conversion_ready.log
+StandardError=append:~/ENTER-WORKING-DIR/monitor_conversion_ready.err
+
+[Install]
+WantedBy=default.target
