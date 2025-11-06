@@ -48,7 +48,7 @@ upload_files() {
     for f in "${files[@]}"; do
         IFS=':' read -r filepath sub_path <<< "$f"
         echo "Copying file: $filepath to $uri_base/$sub_path"
-        "./upload_file_to_gcp.sh" "$filepath" "$uri_base/$sub_path"
+        "./upload_file.sh" "$filepath" "$uri_base/$sub_path"
         ((count++))
         if (( count % MAX_PARALLEL_UPLOADS == 0 )); then
             wait
