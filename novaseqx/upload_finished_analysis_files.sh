@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Export the needed URL and credentials to make sure the upload script works
+# Export the needed server URL and authentication token to make sure the upload script works
 export SERVER_URL="https://upload.test.hartwigmedicalfoundation.nl"
 export AUTH_TOKEN="enter-your-token"
 
