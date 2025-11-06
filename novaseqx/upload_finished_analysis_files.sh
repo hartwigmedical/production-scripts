@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Export the needed URL and credentials to make sure the upload script works
-export SERVER_URL="enter-your-url"
+export SERVER_URL="https://upload.test.hartwigmedicalfoundation.nl"
 export AUTH_TOKEN="enter-your-token"
 
 MAX_PARALLEL_UPLOADS=6
