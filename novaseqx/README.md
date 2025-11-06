@@ -11,7 +11,7 @@ It uses `upload_finished_analysis_files.sh` to upload the files.
     - FASTQ
     - BCL
     - CBCL
-    - Quality metrics, [More can be added in the script]
+    - Quality metrics, SampleSheet, RunInfo, RunParameters
 
 - **Upload Process**: Files are uploaded to GCP buckets organized by type
     - Each file type is stored in its dedicated folder
