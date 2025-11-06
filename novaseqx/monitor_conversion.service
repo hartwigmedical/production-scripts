@@ -7,9 +7,9 @@ Type=simple
 ExecStart=/usr/local/bin/monitor_conversion_ready.sh /user/local/illumina/runs
 Restart=always
 RestartSec=5
-WorkingDirectory=[ENTER-WORKING-DIR]
-StandardOutput=append:[ENTER-WORKING-DIR]/monitor_conversion_ready.log
-StandardError=append:[ENTER-WORKING-DIR]/monitor_conversion_ready.err
+WorkingDirectory=/usr/local/hartwig/scripts/
+StandardOutput=append:/usr/local/hartwig/scripts/monitor_conversion_ready.log
+StandardError=append:/usr/local/hartwig/scripts/monitor_conversion_ready.err
 
 [Install]
 WantedBy=default.target
