@@ -37,9 +37,11 @@ upload_finished_analysis_files.sh /base/folder/runname
 ```
 It will create file(s) in the output bucket in the format of:
 - gs://output-bucket/novaseq/runname/fastq/file.fastq.gz
-- gs://output-bucket/novaseq/runname/bcl/file.bcl
-- gs://output-bucket/novaseq/runname/cbcl/file.cbcl
-- gs://output-bucket/novaseq/runname/reports/Quality_Metrics.csv
+- gs://output-bucket/novaseq/runname/cbcl/L00X/CX.X/file.cbcl
+- gs://output-bucket/novaseq/runname/other/Quality_Metrics.csv
+- gs://output-bucket/novaseq/runname/other/SampleSheet.csv
+- gs://output-bucket/novaseq/runname/other/RunInfo.xml
+- gs://output-bucket/novaseq/runname/other/RunParameters.xml
 
 <H3>Requirements</H3>
 Make sure to follow the readme in the portal-api repository to setup authentication and server url `upload-server/scripts/README.md`.
@@ -49,5 +51,7 @@ Make sure to follow the readme in the portal-api repository to setup authenticat
   
 - **Required packages**:
     - `inotify-tools`, used to monitor the file system for new files in the given base directory
+      - Oracle Linux 8: `sudo dnf install inotify-tools` and test if installed `inotifywait --version`<br>
+        In case EPEL is not enabled yet: `sudo dnf install oracle-epel-release-el8`
 
 

@@ -4,12 +4,12 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/monitor_conversion_ready.sh
+ExecStart=/usr/local/bin/monitor_conversion_ready.sh [enter top level path]
 Restart=always
 RestartSec=5
-WorkingDirectory=~/ENTER-WORKING-DIR
-StandardOutput=append:~/ENTER-WORKING-DIR/monitor_conversion_ready.log
-StandardError=append:~/ENTER-WORKING-DIR/monitor_conversion_ready.err
+WorkingDirectory=[ENTER-WORKING-DIR]
+StandardOutput=append:[ENTER-WORKING-DIR]/monitor_conversion_ready.log
+StandardError=append:[ENTER-WORKING-DIR]/monitor_conversion_ready.err
 
 [Install]
 WantedBy=default.target
