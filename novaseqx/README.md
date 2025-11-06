@@ -54,4 +54,4 @@ Make sure to follow the readme in the portal-api repository to setup authenticat
       - Oracle Linux 8: `sudo dnf install inotify-tools` and test if installed `inotifywait --version`<br>
         In case EPEL is not enabled yet: `sudo dnf install oracle-epel-release-el8`
 
-
+    - By default, the service assumes a folder exists called `/usr/local/hartwig/monitoring_service` in which all scripts are located.
