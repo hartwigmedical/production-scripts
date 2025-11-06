@@ -33,7 +33,7 @@ sudo systemctl start sync_fastq_files.service
 <H3>Uploading Manually</H3>
 Running the `upload_finished_analysis_files.sh` is also possible by calling:
 ```bash
-upload_finished_analysis_files.sh /base/folder/runname
+upload_finished_analysis_files.sh /base/folder/runname runname
 ```
 It will create file(s) in the output bucket in the format of:
 - gs://output-bucket/novaseq/runname/fastq/file.fastq.gz
