@@ -11,7 +11,7 @@ RUN_NAME="$2"
 
 if [ -z "$RUN_DIRECTORY" ]; then
   echo "Provide a run directory"
-  echo "Example: ./upload_finished_analysis_files.sh /path/to/runfolder" "runfolder"
+  echo "Example: ./upload_finished_analysis_files.sh /path/to/runfolder" "base_folder_in_bucket"
   exit 1
 fi
 
@@ -29,7 +29,9 @@ get_sub_path() {
 upload_files() {
     local pattern="*$1"   # The pattern of the files it should match
     local folder=$2       # The base folder in the cloud bucket
-    local folder_depth=$3 # Keeps the structure of the folders counting from the end, e.g. runfolder/f1/f2/file.txt with depth 1 would keep f2/file.txt
+    # Keeps the structure of the folders counting from the end
+    # e.g. runfolder/f1/f2/file.txt with depth 1 would keep f2/file.txt
+    local folder_depth=$3
 
     echo "----------$pattern------------"
     local uri_base="novaseq/$RUN_NAME/$folder"
