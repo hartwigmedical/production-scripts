@@ -4,7 +4,7 @@
 export SERVER_URL="https://upload.test.hartwigmedicalfoundation.nl"
 export AUTH_TOKEN="enter-your-token"
 
-MAX_PARALLEL_UPLOADS=6
+MAX_PARALLEL_UPLOADS=3
 OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "RunInfo.xml" "RunParameters.xml")
 RUN_DIRECTORY="$1"
 RUN_NAME="$2"
@@ -14,6 +14,8 @@ if [ -z "$RUN_DIRECTORY" ]; then
   echo "Example: ./upload_finished_analysis_files.sh /path/to/runfolder" "base_folder_in_bucket"
   exit 1
 fi
+
+echo "Doing ${MAX_PARALLEL_UPLOADS} at the same time to server ${SERVER_URL}"
 
 get_sub_path() {
     local file=$1
@@ -42,26 +44,17 @@ upload_files() {
         files+=("$file:$(get_sub_path "$file" "$folder_depth")")
     done < <(find "$RUN_DIRECTORY" -type f -name "$pattern")
 
-    echo "Found ${#files[@]} file(s)"
-
-    local count=0
-    for f in "${files[@]}"; do
-        IFS=':' read -r filepath sub_path <<< "$f"
-        echo "Copying file: $filepath to $uri_base/$sub_path"
-        "./upload_file.sh" "$filepath" "$uri_base/$sub_path"
-        ((count++))
-        if (( count % MAX_PARALLEL_UPLOADS == 0 )); then
-            wait
-        fi
-    done
+    echo "Uploading ${#files[@]} file(s)"
+    printf "%s\n" "${files[@]}" | parallel -j $MAX_PARALLEL_UPLOADS -C ':' './upload-file.sh' {1} "$uri_base"/{2}
     wait
+
     echo "Done uploading the $pattern files"
-    echo ""
+    echo
 }
 
-echo "Searching files in $RUN_DIRECTORY"
-
 SECONDARY_ANALYSIS_FILE="$RUN_DIRECTORY/Analysis/1/Data/Secondary_Analysis_Complete.txt"
+
+echo "Searching files in $RUN_DIRECTORY"
 echo "Searching secondary analysis completion file $SECONDARY_ANALYSIS_FILE"
 if [[ -f "$SECONDARY_ANALYSIS_FILE" ]]; then
     echo "Completion file found..."
