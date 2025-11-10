@@ -26,8 +26,8 @@ This will ensure that when the machine is restarted, so does the monitoring serv
 To add the service, run the following commands on the machine:
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable sync_fastq_files.service
-sudo systemctl start sync_fastq_files.service
+sudo systemctl enable monitor_conversion.service
+sudo systemctl start monitor_conversion.service
 ```
 
 <H3>Uploading Manually</H3>
