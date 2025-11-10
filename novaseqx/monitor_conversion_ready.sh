@@ -17,11 +17,6 @@ process_folder() {
     "./upload_finished_analysis_files.sh" "$dir" "$run_name"
 }
 
-echo "Scanning existing folders in $BASE_DIR for $ANALYSIS_COMPLETE_FILE files"
-find "$BASE_DIR" -type f -name "$(basename "$ANALYSIS_COMPLETE_FILE")" | while read -r file; do
-    process_folder "$file"
-done
-
 echo "Monitoring $BASE_DIR for new $ANALYSIS_COMPLETE_FILE files"
 inotifywait -m -r -e close_write --format '%w%f' "$BASE_DIR" | while read -r file; do
     if [[ $(basename "$file") == "$ANALYSIS_COMPLETE_FILE" ]]; then
