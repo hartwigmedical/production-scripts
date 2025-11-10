@@ -23,6 +23,7 @@ This script should be in the same directory as the `upload_finished_analysis_fil
 - **Starting the Monitoring Service**
 The monitoring service is started by adding the `monitor_conversion.service`.
 This will ensure that when the machine is restarted, so does the monitoring service.
+This service has to be located in the `/etc/systemd/system` directory on the NovaSeq X because it will not work otherwise (SELinux enforces this)
 To add the service, run the following commands on the machine:
 ```bash
 sudo systemctl daemon-reload
