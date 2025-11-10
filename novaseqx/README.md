@@ -53,7 +53,7 @@ Make sure to follow the readme in the portal-api repository to setup authenticat
     - `inotify-tools`, used to monitor the file system for new files in the given base directory
       - Oracle Linux 8: `sudo dnf install inotify-tools` and test if installed `inotifywait --version`<br>
         In case EPEL is not enabled yet: `sudo dnf install oracle-epel-release-el8`
-    - 'parallel', used to upload multiple files in parallel
+    - `parallel`, used to upload multiple files in parallel
       - Oracle Linux 8: `sudo dnf install parallel` and test if installed `parallel --version`
       - The first time used the package logs a lot about citations, to silence this, follow the instructions it prints the first time.
 
