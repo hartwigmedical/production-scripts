@@ -64,7 +64,6 @@ else
 fi
 
 upload_files ".fastq.gz" "fastq"
-upload_files ".cbcl" "cbcl" 2
 
 for file in "${OTHER_FILES[@]}"; do
     upload_files "$file" "other"
