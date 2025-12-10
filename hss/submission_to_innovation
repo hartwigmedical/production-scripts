@@ -27,7 +27,8 @@ if [[ ${sample_barcodes} == "" ]]; then
 fi
 
 info "Copy FASTQs"
-year_string="${submission_id:9:2}"  # change before year 2100
+year_string=$(date +%Y)
+year_string="${year_string:2:2}"  # change before year 2100
 for barcode in ${sample_barcodes}; do
     destination_url="gs://hmf-crunch-innovation/fastq/HMFregINN-20${year_string}/${submission_id}/${barcode}/"
     info "Moving sample ${barcode} from gs://fastq-input-prod-1/ to ${destination_url}"
