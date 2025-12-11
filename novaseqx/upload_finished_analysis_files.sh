@@ -15,6 +15,11 @@ if [ -z "$RUN_DIRECTORY" ]; then
   exit 1
 fi
 
+if [[ -z "$RUN_NAME" ]]; then
+    echo "Error: provide a RUN_NAME, this must be set"
+    exit 1
+fi
+
 echo "Doing ${MAX_PARALLEL_UPLOADS} at the same time to server ${SERVER_URL}"
 
 get_sub_path() {
