@@ -21,9 +21,6 @@ echo "Monitoring $BASE_DIR for new $ANALYSIS_COMPLETE_FILE files"
 inotifywait -m -r -e close_write --format '%w%f' "$BASE_DIR" | while read -r file; do
     if [[ $(basename "$file") == "$ANALYSIS_COMPLETE_FILE" ]]; then
         dir="$(dirname "$file")"
-        if [[ ! -f "$dir/copy_complete.txt" ]]; then
-            process_folder "$file"
-            touch "$dir/copy_complete.txt"
-        fi
+        process_folder "$file"
     fi
 done
