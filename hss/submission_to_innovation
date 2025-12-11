@@ -2,15 +2,21 @@
 
 source message_functions || exit 1
 
-submission_id=$1
-
 if [[ -z $1 || $1 == "-h" || $1 == "--help" ]]; then
     echo "---"
     echo " Descr: Move fastq samples from fastq-input-prod-1 to hmf-crunch-innovation"
-    echo " Usage: $(basename $0) submission"
-    echo " Exmpl: $(basename $0) HMFregINN2207"
+    echo " Usage: $(basename $0) submission [output folder extension]"
+    echo " Exmpl: $(basename $0) HMFregINN2207 [test]"
     echo "---"
     exit 1
+fi
+
+submission_id=$1
+
+if [[ -n $2 ]]; then
+    folder_extension=$2
+else
+    folder_extension=$(date +%Y)
 fi
 
 info "Get samples from submission ${submission_id}"
@@ -21,10 +27,8 @@ if [[ ${sample_barcodes} == "" ]]; then
 fi
 
 info "Copy FASTQs"
-year_string=$(date +%Y)
-year_string="${year_string:2:2}"  # change before year 2100
 for barcode in ${sample_barcodes}; do
-    destination_url="gs://hmf-crunch-innovation/fastq/HMFregINN-20${year_string}/${submission_id}/${barcode}/"
+    destination_url="gs://hmf-crunch-innovation/fastq/HMFregINN-${folder_extension}/${submission_id}/${barcode}/"
     info "Moving sample ${barcode} from gs://fastq-input-prod-1/ to ${destination_url}"
     gsutil -m cp "gs://fastq-input-prod-1/${barcode}_*fastq.gz" "${destination_url}"
 done
