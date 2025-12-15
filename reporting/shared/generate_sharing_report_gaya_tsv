@@ -56,9 +56,9 @@ if [[ ! -f "${UPLOAD_FILE}" ]]; then
     error "Source file does not exist (${UPLOAD_FILE})"
 fi
 
-info "START with uploading file UPLOAD_FILE with date $(date '+%y%m%d')"
+info "START with uploading file ${UPLOAD_FILE} with date $(date '+%y%m%d')"
 info " Syncing ${UPLOAD_FILE} to NAS (to ${nas_loc})"
 copy_file_to_nas "${UPLOAD_FILE}" "${nas_loc}/"
 copy_file_to_nas "${UPLOAD_FILE}" "${nas_loc}/${UPLOAD_FILE}"
-info "  File updated (see https://hmf-nas.synology.me/reporting_genaya/reporting/)"
+info "  File updated (see https://hmf-nas.synology.me/overviews/reporting_genaya/)"
 info "DONE with syncing file ${UPLOAD_FILE} to nas"
