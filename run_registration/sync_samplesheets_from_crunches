@@ -10,6 +10,7 @@ samplesheets_bucket=$(locate_samplesheets_at_gcp) || die "Could not find samples
 
 switch_to_hmf_ops_service_account || die "Could not switch to hmf ops"
 
+# NovaSeq 6000, ISeq
 for server in sts1.prod-1 sts2.prod-1; do
 
     info "Checking ${server} for samplesheets"
@@ -38,3 +39,6 @@ for server in sts1.prod-1 sts2.prod-1; do
         gsutil -q stat "${in_bucket_path}" || die "Could not upload samplesheet for ${run_name} to ${samplesheets_bucket}"
     done
 done
+
+# NovaSeq X
+gsutil -m cp "gs://lama-prod-1/sample-sheets/*_SampleSheet.csv" "${samplesheets_bucket}/"
