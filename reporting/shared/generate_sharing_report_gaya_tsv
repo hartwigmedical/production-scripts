@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+source message_functions || exit 1
+
+set -e
+
+GAYA_SHARED=gaya_shared_intern.tsv
+GAYA_SHARED_WITH_EXTERNAL_IDS=gaya_shared.tsv
+DESTINATION="/data/ops/lims/prod"
+NA_CHAR="N/A"
+wd="$(mktemp -d)"
+
+info "Generating sharing DB TSV in tmp dir for GAYA cohort [$wd]"
+cd "$wd"
+
+info "Retrieving reports/shared info from API"
+shared_reports=$(hmf_api_get "reports/shared")
+info "Extract only the reports/shared for GENAYA cohort"
+shared_reports_gaya=$(jq '[ .[] |  select(.report_created.cohort == "GENAYA") ]' <<< "${shared_reports}")
+
+info "Creating overview of all reported samples of GENAYA cohort"
+printf "%s\t%s\t%s\t%s\t%s\t%s\n" \
+   tumorBarcode sampleId cohort createDate shareDate reportType > "$GAYA_SHARED"
+jq --arg na "$NA_CHAR" -r '.[] | [
+    .report_created.barcode//$na,
+    .report_created.sample_name//$na,
+    .report_created.cohort//$na,
+    (.report_created.create_time|strptime("%Y-%m-%dT%H:%M:%S")|strftime("%d-%b-%Y"))//$na,
+    (.share_time|strptime("%Y-%m-%dT%H:%M:%S")|strftime("%d-%b-%Y"))//$na,
+    .report_created.report_type//$na
+] | @tsv' <<< "${shared_reports_gaya}" >> "$GAYA_SHARED"
+
+printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+   patientId pathologyNumber hospitalSampleLabel tumorBarcode sampleId cohort createDate shareDate reportType > ${GAYA_SHARED_WITH_EXTERNAL_IDS}
+while IFS= read -r line; do
+    isolation_barcode=$(echo "$line" | awk '{print $1}')
+    patientId=$(lama_get_patient_reporter_data ${isolation_barcode} | jq .reportingId | tr -d '"')
+    pathologyNumber=$(lama_get_patient_reporter_data ${isolation_barcode} | jq .pathologyNumber | tr -d '"')
+    hospitalSampleLabel=$(lama_get_patient_reporter_data ${isolation_barcode} | jq .hospitalSampleLabel | tr -d '"')
+    echo -e "$patientId\t$pathologyNumber\t$hospitalSampleLabel\t$line" >> $GAYA_SHARED_WITH_EXTERNAL_IDS
+done < $GAYA_SHARED
+info "Done generating sharing DB TSV of GENAYA cohort [$GAYA_SHARED_WITH_EXTERNAL_IDS]"
+
+info "Copying output file to final destination [$DESTINATION]"
+cp "$GAYA_SHARED_WITH_EXTERNAL_IDS" "$DESTINATION"
+
+info "Removing tmp dir [$wd]"
+rm -r "$wd"
+
+info "Starting sync gaya reporting overview to nas"
+nas_loc="/volume1/web/overviews/reporting_genaya"
+
+## Sanity check
+if [[ ! -f "${GAYA_SHARED_WITH_EXTERNAL_IDS}" ]]; then
+    error "Source file does not exist (${GAYA_SHARED_WITH_EXTERNAL_IDS})"
+fi
+
+info "START with uploading file $GAYA_SHARED_WITH_EXTERNAL_IDS with date $(date '+%y%m%d')"
+info " Syncing ${GAYA_SHARED_WITH_EXTERNAL_IDS} to NAS (to ${nas_loc})"
+copy_file_to_nas "${GAYA_SHARED_WITH_EXTERNAL_IDS}" "${nas_loc}/"
+copy_file_to_nas "${GAYA_SHARED_WITH_EXTERNAL_IDS}" "${nas_loc}/$GAYA_SHARED_WITH_EXTERNAL_IDS"
+info "  File updated (see https://hmf-nas.synology.me/reporting_genaya/reporting/)"
+info "DONE with syncing file ${GAYA_SHARED_WITH_EXTERNAL_IDS} to nas"
