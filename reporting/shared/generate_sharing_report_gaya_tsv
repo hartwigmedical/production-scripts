@@ -7,6 +7,7 @@ set -e
 GAYA_SHARED=gaya_shared_intern.tsv
 GAYA_SHARED_WITH_EXTERNAL_IDS=gaya_shared.tsv
 DESTINATION="/data/ops/lims/prod"
+UPLOAD_FILE="${DESTINATION}/${GAYA_SHARED_WITH_EXTERNAL_IDS}"
 NA_CHAR="N/A"
 wd="$(mktemp -d)"
 
@@ -51,13 +52,13 @@ info "Starting sync gaya reporting overview to nas"
 nas_loc="/volume1/web/overviews/reporting_genaya"
 
 ## Sanity check
-if [[ ! -f "${GAYA_SHARED_WITH_EXTERNAL_IDS}" ]]; then
-    error "Source file does not exist (${GAYA_SHARED_WITH_EXTERNAL_IDS})"
+if [[ ! -f "${UPLOAD_FILE}" ]]; then
+    error "Source file does not exist (${UPLOAD_FILE})"
 fi
 
-info "START with uploading file $GAYA_SHARED_WITH_EXTERNAL_IDS with date $(date '+%y%m%d')"
-info " Syncing ${GAYA_SHARED_WITH_EXTERNAL_IDS} to NAS (to ${nas_loc})"
-copy_file_to_nas "${GAYA_SHARED_WITH_EXTERNAL_IDS}" "${nas_loc}/"
-copy_file_to_nas "${GAYA_SHARED_WITH_EXTERNAL_IDS}" "${nas_loc}/$GAYA_SHARED_WITH_EXTERNAL_IDS"
+info "START with uploading file UPLOAD_FILE with date $(date '+%y%m%d')"
+info " Syncing ${UPLOAD_FILE} to NAS (to ${nas_loc})"
+copy_file_to_nas "${UPLOAD_FILE}" "${nas_loc}/"
+copy_file_to_nas "${UPLOAD_FILE}" "${nas_loc}/${UPLOAD_FILE}"
 info "  File updated (see https://hmf-nas.synology.me/reporting_genaya/reporting/)"
-info "DONE with syncing file ${GAYA_SHARED_WITH_EXTERNAL_IDS} to nas"
+info "DONE with syncing file ${UPLOAD_FILE} to nas"
