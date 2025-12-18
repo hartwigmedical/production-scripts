@@ -6,18 +6,18 @@ export AUTH_TOKEN="enter-your-token"
 
 MAX_PARALLEL_UPLOADS=6
 OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "RunInfo.xml")
-RUN_DIRECTORY="$1"
-RUN_DIRECTORY="${RUN_DIRECTORY%/}"
-RUN_NAME="$2"
-RUN_NAME="${RUN_NAME#/}"
+FLOWCELL_DATA_DIRECTORY="$1"
+FLOWCELL_DATA_DIRECTORY="${FLOWCELL_DATA_DIRECTORY%/}"
+FLOWCELL_ID="$2"
+FLOWCELL_ID="${FLOWCELL_ID#/}"
 
-if [ -z "$RUN_DIRECTORY" ]; then
+if [ -z "$FLOWCELL_DATA_DIRECTORY" ]; then
   echo "Provide a run directory"
-  echo "Example: ./upload_finished_analysis_files.sh /path/to/[run directory]" "flowcell_id"
+  echo "Example: ./upload_finished_analysis_files.sh [FLOWCELL_DATA_DIRECTORY] [FLOWCELL_ID]"
   exit 1
 fi
 
-if [[ -z "$RUN_NAME" ]]; then
+if [[ -z "$FLOWCELL_ID" ]]; then
     echo "Error: provide a flowcell ID, this must be set and unique otherwise the files will be overridden"
     exit 1
 fi
@@ -28,7 +28,7 @@ get_sub_path() {
     local file=$1
     local folder_depth=$2
     if [ -n "$folder_depth" ]; then
-        local rel_path=${file#"$RUN_DIRECTORY"/}
+        local rel_path=${file#"$FLOWCELL_DATA_DIRECTORY"/}
         echo "$(echo "$rel_path" | rev | cut -d'/' -f1-$((folder_depth+1)) | rev)"
     else
         echo "$(basename "$file")"
@@ -43,13 +43,13 @@ upload_files() {
     local folder_depth=$3
 
     echo "----------$pattern------------"
-    local uri_base="novaseq/$RUN_NAME/$folder"
+    local uri_base="novaseq/$FLOWCELL_ID/$folder"
     echo "Starting to upload $pattern files to $uri_base"
 
     files=()
     while IFS= read -r file; do
         files+=("$file:$(get_sub_path "$file" "$folder_depth")")
-    done < <(find "$RUN_DIRECTORY" -type f -name "$pattern")
+    done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
 
     echo "Uploading ${#files[@]} file(s)"
     printf "%s\n" "${files[@]}" | parallel -j $MAX_PARALLEL_UPLOADS -C ':' './upload-file.sh' {1} "$uri_base"/{2}
@@ -58,17 +58,6 @@ upload_files() {
     echo "Done uploading the $pattern files"
     echo
 }
-
-SECONDARY_ANALYSIS_FILE="$RUN_DIRECTORY/Analysis/1/Data/Secondary_Analysis_Complete.txt"
-
-echo "Searching files in $RUN_DIRECTORY"
-echo "Searching secondary analysis completion file $SECONDARY_ANALYSIS_FILE"
-if [[ -f "$SECONDARY_ANALYSIS_FILE" ]]; then
-    echo "Completion file found..."
-else
-    echo "No secondary analysis complete file found at $RUN_DIRECTORY"
-    exit 1
-fi
 
 upload_files ".fastq.gz" "fastq"
 
