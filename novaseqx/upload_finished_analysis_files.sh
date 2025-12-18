@@ -44,13 +44,18 @@ upload_files() {
     echo
     echo "----------$pattern------------"
     local uri_base="novaseq/$FLOWCELL_ID/$folder"
-    echo "Starting to upload $pattern files to $uri_base"
 
     files=()
     while IFS= read -r file; do
         files+=("$file:$(get_sub_path "$file" "$folder_depth")")
     done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
-    echo "Found ${#files[@]} $pattern file(s)"
+
+    if [ ${#files[@]} -eq 0 ]; then
+        echo "No files found matching $pattern"
+        return
+    fi
+
+    echo "Starting to upload $pattern (${#files[@]}) files to $uri_base"
     printf "%s\n" "${files[@]}" | parallel -j $MAX_PARALLEL_UPLOADS -C ':' './upload-file.sh' {1} "$uri_base"/{2}
     wait
 
