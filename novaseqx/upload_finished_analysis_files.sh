@@ -47,7 +47,7 @@ upload_files() {
     echo "Starting to upload $pattern files to $uri_base"
 
     files=()
-    echo $(get_sub_path "$file" "$folder_depth")"
+    echo "$(get_sub_path "$pattern" "$folder_depth")"
     while IFS= read -r file; do
         files+=("$file:$(get_sub_path "$file" "$folder_depth")")
     done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
