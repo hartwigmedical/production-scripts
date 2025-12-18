@@ -29,11 +29,14 @@ process_folder() {
     local flowcell_name="${run%%/*}"
     local analysis_num=$(echo "$run" | grep -oP 'Analysis/\K\d+' || echo "unknown")
 
+    echo
     echo "Processing flowcell: $flowcell_name (Analysis: $analysis_num)"
     "./upload_finished_analysis_files.sh" "$data_dir" "$flowcell_name"
 }
 
+echo
 echo "Monitoring $DIR_TO_WATCH for new $ANALYSIS_COMPLETE_FILE files"
+echo
 inotifywait -m -r -e close_write --format '%w%f' "$DIR_TO_WATCH" | while read -r full_path; do
     if [[ "$full_path" == *"$ANALYSIS_COMPLETE_FILE" ]]; then
         process_folder "$full_path"
