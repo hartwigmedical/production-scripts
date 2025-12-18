@@ -14,6 +14,7 @@ FLOWCELL_ID="${FLOWCELL_ID#/}"
 if [ -z "$FLOWCELL_DATA_DIRECTORY" ]; then
   echo "Error: Provide a run directory"
   echo "Example: ./upload_finished_analysis_files.sh [FLOWCELL_DATA_DIRECTORY] [FLOWCELL_ID]"
+  echo "Specify which analysis should be uploaded in the path e.g. FLOWCELL_DATA_DIRECTORY/Analysis/1/Data"
   exit 1
 fi
 
