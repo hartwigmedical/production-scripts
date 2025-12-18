@@ -46,12 +46,13 @@ upload_files() {
     local uri_base="novaseq/$FLOWCELL_ID/$folder"
     echo "Starting to upload $pattern files to $uri_base"
 
+    echo "Script is running from: $(pwd)"
     files=()
     while IFS= read -r file; do
         files+=("$file:$(get_sub_path "$file" "$folder_depth")")
     done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
     echo "Uploading ${#files[@]} file(s)"
-    printf "%s\n" "${files[@]}" | parallel -j $MAX_PARALLEL_UPLOADS -C ':' 'bash ./upload-file.sh' {1} "$uri_base"/{2}
+    printf "%s\n" "${files[@]}" | parallel -j $MAX_PARALLEL_UPLOADS -C ':' './upload-file.sh' {1} "$uri_base"/{2}
     wait
 
     echo "Done uploading the $pattern files"
