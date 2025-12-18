@@ -7,17 +7,18 @@ export AUTH_TOKEN="enter-your-token"
 MAX_PARALLEL_UPLOADS=6
 OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "RunInfo.xml")
 RUN_DIRECTORY="$1"
+RUN_DIRECTORY="${RUN_DIRECTORY%/}"
 RUN_NAME="$2"
 RUN_NAME="${RUN_NAME#/}"
 
 if [ -z "$RUN_DIRECTORY" ]; then
   echo "Provide a run directory"
-  echo "Example: ./upload_finished_analysis_files.sh /path/to/runfolder" "base_folder_in_bucket"
+  echo "Example: ./upload_finished_analysis_files.sh /path/to/[run directory]" "flowcell_id"
   exit 1
 fi
 
 if [[ -z "$RUN_NAME" ]]; then
-    echo "Error: provide a RUN_NAME, this must be set"
+    echo "Error: provide a flowcell ID, this must be set and unique otherwise the files will be overridden"
     exit 1
 fi
 
