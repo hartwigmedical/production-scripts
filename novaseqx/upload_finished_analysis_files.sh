@@ -6,27 +6,30 @@ export AUTH_TOKEN="enter-your-token"
 
 MAX_PARALLEL_UPLOADS=6
 OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "RunInfo.xml" "Demultiplex_Stats.csv" "Top_Unknown_Barcodes.csv")
-RUN_DIRECTORY="$1"
-RUN_NAME="$2"
+FLOWCELL_DATA_DIRECTORY="$1"
+FLOWCELL_DATA_DIRECTORY="${FLOWCELL_DATA_DIRECTORY%/}"
+FLOWCELL_ID="$2"
+FLOWCELL_ID="${FLOWCELL_ID#/}"
 
-if [ -z "$RUN_DIRECTORY" ]; then
-  echo "Provide a run directory"
-  echo "Example: ./upload_finished_analysis_files.sh /path/to/runfolder" "base_folder_in_bucket"
+if [ -z "$FLOWCELL_DATA_DIRECTORY" ]; then
+  echo "Error: Provide a run directory"
+  echo "Example: ./upload_finished_analysis_files.sh [FLOWCELL_DATA_DIRECTORY] [FLOWCELL_ID]"
+  echo "Specify which analysis should be uploaded in the path e.g. FLOWCELL_DATA_DIRECTORY/Analysis/1/Data"
   exit 1
 fi
 
-if [[ -z "$RUN_NAME" ]]; then
-    echo "Error: provide a RUN_NAME, this must be set"
+if [[ -z "$FLOWCELL_ID" ]]; then
+    echo "Error: provide a flowcell ID, this must be set and unique otherwise the files will be overridden"
     exit 1
 fi
 
-echo "Doing ${MAX_PARALLEL_UPLOADS} at the same time to server ${SERVER_URL}"
+echo "Doing a maximum of ${MAX_PARALLEL_UPLOADS} parallel uploads using server: ${SERVER_URL}"
 
 get_sub_path() {
     local file=$1
     local folder_depth=$2
     if [ -n "$folder_depth" ]; then
-        local rel_path=${file#"$RUN_DIRECTORY"/}
+        local rel_path=${file#"$FLOWCELL_DATA_DIRECTORY"/}
         echo "$(echo "$rel_path" | rev | cut -d'/' -f1-$((folder_depth+1)) | rev)"
     else
         echo "$(basename "$file")"
@@ -39,34 +42,26 @@ upload_files() {
     # Keeps the structure of the folders counting from the end
     # e.g. runfolder/f1/f2/file.txt with depth 1 would keep f2/file.txt
     local folder_depth=$3
-
+    echo
     echo "----------$pattern------------"
-    local uri_base="novaseq/$RUN_NAME/$folder"
-    echo "Starting to upload $pattern files to $uri_base"
+    local uri_base="novaseq/$FLOWCELL_ID/$folder"
 
     files=()
     while IFS= read -r file; do
         files+=("$file:$(get_sub_path "$file" "$folder_depth")")
-    done < <(find "$RUN_DIRECTORY" -type f -name "$pattern")
+    done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
 
-    echo "Uploading ${#files[@]} file(s)"
+    if [ ${#files[@]} -eq 0 ]; then
+        echo "No files found matching $pattern"
+        return
+    fi
+
+    echo "Starting to upload $pattern (${#files[@]}) files to $uri_base"
     printf "%s\n" "${files[@]}" | parallel -j $MAX_PARALLEL_UPLOADS -C ':' './upload-file.sh' {1} "$uri_base"/{2}
     wait
 
     echo "Done uploading the $pattern files"
-    echo
 }
-
-SECONDARY_ANALYSIS_FILE="$RUN_DIRECTORY/Analysis/1/Data/Secondary_Analysis_Complete.txt"
-
-echo "Searching files in $RUN_DIRECTORY"
-echo "Searching secondary analysis completion file $SECONDARY_ANALYSIS_FILE"
-if [[ -f "$SECONDARY_ANALYSIS_FILE" ]]; then
-    echo "Completion file found..."
-else
-    echo "No secondary analysis complete file found at $RUN_DIRECTORY"
-    exit 1
-fi
 
 upload_files ".fastq.gz" "fastq"
 
