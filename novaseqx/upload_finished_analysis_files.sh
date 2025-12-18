@@ -8,6 +8,7 @@ MAX_PARALLEL_UPLOADS=6
 OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "RunInfo.xml")
 RUN_DIRECTORY="$1"
 RUN_NAME="$2"
+RUN_NAME="${RUN_NAME#/}"
 
 if [ -z "$RUN_DIRECTORY" ]; then
   echo "Provide a run directory"
