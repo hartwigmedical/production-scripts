@@ -7,6 +7,15 @@ if [ -z "$BASE_DIR" ]; then
   exit 1
 fi
 
+# Kill any existing inotifywait processes watching the same directory
+for pid in $(pgrep -x inotifywait); do
+    if grep -q "$BASE_DIR" /proc/$pid/cmdline 2>/dev/null; then
+        echo "Killing existing inotifywait process (PID: $pid) watching $BASE_DIR..."
+        kill $pid
+        sleep 1
+    fi
+done
+
 ANALYSIS_COMPLETE_FILE="Analysis/1/Data/Secondary_Analysis_Complete.txt"
 
 process_folder() {
