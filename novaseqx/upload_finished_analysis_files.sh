@@ -12,7 +12,7 @@ FLOWCELL_ID="$2"
 FLOWCELL_ID="${FLOWCELL_ID#/}"
 
 if [ -z "$FLOWCELL_DATA_DIRECTORY" ]; then
-  echo "Provide a run directory"
+  echo "Error: Provide a run directory"
   echo "Example: ./upload_finished_analysis_files.sh [FLOWCELL_DATA_DIRECTORY] [FLOWCELL_ID]"
   exit 1
 fi
