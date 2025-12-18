@@ -1,26 +1,44 @@
 #!/bin/bash
 
-BASE_DIR="$1"
-if [ -z "$BASE_DIR" ]; then
-  echo "Provide a base directory to watch";
-  echo "Example: monitor_conversion_ready.sh /my/home/dir"
+DIR_TO_WATCH="$1"
+DIR_TO_WATCH="${DIR_TO_WATCH%/}"
+if [ -z "$DIR_TO_WATCH" ]; then
+  echo "Provide a full path directory to watch";
+  echo "The script assumes a structure after the directory to watch as /Analysis/[analysis_num]/Data"
+  echo "It will process any folder in the given directory where a Secondary_Analysis_Complete.txt is created"
+  echo "Example: monitor_conversion_ready.sh [full path to directory to watch]"
   exit 1
 fi
 
-ANALYSIS_COMPLETE_FILE="/Analysis/1/Data/Secondary_Analysis_Complete.txt"
+# Kill any existing inotifywait processes watching the same directory
+for pid in $(pgrep -x inotifywait); do
+    if grep -q "$DIR_TO_WATCH" /proc/$pid/cmdline 2>/dev/null; then
+        echo "Killing existing inotifywait process (PID: $pid) watching $DIR_TO_WATCH..."
+        kill -9 $pid
+        sleep 1
+    fi
+done
+
+ANALYSIS_COMPLETE_FILE="Secondary_Analysis_Complete.txt"
 
 process_folder() {
-    local file="$1"
-    local dir="${file%%"$ANALYSIS_COMPLETE_FILE"}"
-    local run_name="${dir##"$BASE_DIR"/}"
-    echo "Processing run: $run_name"
-    "./upload_finished_analysis_files.sh" "$dir" "$run_name"
+    local flowcell_folder="$1"
+    local data_dir="${flowcell_folder%%"$ANALYSIS_COMPLETE_FILE"}"
+    local run="${data_dir##"$DIR_TO_WATCH"}"
+    run="${run#/}"
+    local flowcell_name="${run%%/*}"
+    local analysis_num=$(echo "$run" | grep -oP 'Analysis/\K\d+' || echo "unknown")
+
+    echo
+    echo "Processing flowcell: $flowcell_name (Analysis: $analysis_num)"
+    "./upload_finished_analysis_files.sh" "$data_dir" "$flowcell_name"
 }
 
-echo "Monitoring $BASE_DIR for new $ANALYSIS_COMPLETE_FILE files"
-inotifywait -m -r -e close_write --format '%w%f' "$BASE_DIR" | while read -r file; do
-    if [[ $(basename "$file") == "$ANALYSIS_COMPLETE_FILE" ]]; then
-        dir="$(dirname "$file")"
-        process_folder "$file"
+echo
+echo "Monitoring $DIR_TO_WATCH for new $ANALYSIS_COMPLETE_FILE files"
+echo
+inotifywait -m -r -e close_write --format '%w%f' "$DIR_TO_WATCH" | while read -r full_path; do
+    if [[ "$full_path" == *"$ANALYSIS_COMPLETE_FILE" ]]; then
+        process_folder "$full_path"
     fi
 done
