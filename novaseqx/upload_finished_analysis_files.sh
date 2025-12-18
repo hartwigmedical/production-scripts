@@ -5,7 +5,7 @@ export SERVER_URL="https://upload.test.hartwigmedicalfoundation.nl"
 export AUTH_TOKEN="enter-your-token"
 
 MAX_PARALLEL_UPLOADS=6
-OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "RunInfo.xml")
+OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "RunInfo.xml" "Demultiplex_Stats.csv" "Top_Unknown_Barcodes.csv")
 FLOWCELL_DATA_DIRECTORY="$1"
 FLOWCELL_DATA_DIRECTORY="${FLOWCELL_DATA_DIRECTORY%/}"
 FLOWCELL_ID="$2"
