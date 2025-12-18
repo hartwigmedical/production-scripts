@@ -39,8 +39,6 @@ echo "Monitoring $DIR_TO_WATCH for new $ANALYSIS_COMPLETE_FILE files"
 inotifywait -m -r -e close_write --format '%w%f' "$DIR_TO_WATCH" | while read -r full_path; do
   echo "Found flowcell_folder: $full_path"
     if [[ "$full_path" == *"$ANALYSIS_COMPLETE_FILE" ]]; then
-        FLOWCELL_FOLDER="${full_path#"$DIR_TO_WATCH"}"
-        echo "${FLOWCELL_FOLDER}"
-        process_folder "$FLOWCELL_FOLDER"
+        process_folder "$full_path"
     fi
 done
