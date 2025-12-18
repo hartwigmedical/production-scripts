@@ -45,8 +45,8 @@ info "Done generating sharing DB TSV of GENAYA cohort [$GAYA_SHARED_WITH_EXTERNA
 info "Copying output file to final destination [$DESTINATION]"
 cp "$GAYA_SHARED_WITH_EXTERNAL_IDS" "$DESTINATION"
 
-info "Removing tmp dir [$wd]"
-rm -r "$wd"
+#info "Removing tmp dir [$wd]"
+#rm -r "$wd"
 
 #info "Starting sync gaya reporting overview to nas"
 #nas_loc="/volume1/web/overviews/reporting"
