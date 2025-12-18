@@ -21,9 +21,9 @@ process_folder() {
 
 echo "Monitoring $BASE_DIR for new $ANALYSIS_COMPLETE_FILE files"
 inotifywait -m -r -e close_write --format '%w%f' "$BASE_DIR" | while read -r full_path; do
-  echo "$full_path"
+  echo "Found file: $full_path"
     if [[ "$full_path" == *"$ANALYSIS_COMPLETE_FILE" ]]; then
-        FLOWCELL_FOLDER="${full_path#$BASE_PATH}"
+        FLOWCELL_FOLDER="${full_path#BASE_PATH}"
         process_folder "$FLOWCELL_FOLDER"
     fi
 done
