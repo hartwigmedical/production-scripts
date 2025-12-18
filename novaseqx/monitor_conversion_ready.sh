@@ -11,7 +11,7 @@ fi
 for pid in $(pgrep -x inotifywait); do
     if grep -q "$BASE_DIR" /proc/$pid/cmdline 2>/dev/null; then
         echo "Killing existing inotifywait process (PID: $pid) watching $BASE_DIR..."
-        kill $pid
+        kill -9 $pid
         sleep 1
     fi
 done
