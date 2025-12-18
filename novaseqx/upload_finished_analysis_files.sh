@@ -54,7 +54,7 @@ upload_files() {
         files+=("$file:$(get_sub_path "$file" "$folder_depth")")
     done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
     echo "Found files "
-    echo files[@]
+    echo "${files[@]}"
     echo "Uploading ${#files[@]} file(s)"
     printf "%s\n" "${files[@]}" | parallel -j $MAX_PARALLEL_UPLOADS -C ':' './upload-file.sh' {1} "$uri_base"/{2}
     wait
