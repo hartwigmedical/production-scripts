@@ -22,7 +22,7 @@ if [[ -z "$FLOWCELL_ID" ]]; then
     exit 1
 fi
 
-echo "Doing ${MAX_PARALLEL_UPLOADS} at the same time to server ${SERVER_URL}"
+echo "Doing a maximum of ${MAX_PARALLEL_UPLOADS} uploads at the same time using server: ${SERVER_URL}"
 
 get_sub_path() {
     local file=$1
