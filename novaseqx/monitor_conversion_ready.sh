@@ -24,10 +24,10 @@ ANALYSIS_COMPLETE_FILE="Secondary_Analysis_Complete.txt"
 process_folder() {
     local flowcell_folder="$1"
     local data_dir="${flowcell_folder%%"$ANALYSIS_COMPLETE_FILE"}"
-
-    # Extract flowcell name and analysis number
-    local flowcell_name=$(echo "$data_dir" | cut -d'/' -f1)
-    local analysis_num=$(echo "$data_dir" | grep -oP 'Analysis/\K\d+' || echo "unknown")
+    local run="${data_dir##"$DIR_TO_WATCH"}"
+    run="${run#/}"
+    local flowcell_name="${run%%/*}"
+    local analysis_num=$(echo "$run" | grep -oP 'Analysis/\K\d+' || echo "unknown")
 
     echo "Processing flowcell: $flowcell_name (Analysis: $analysis_num)"
     "./upload_finished_analysis_files.sh" "$data_dir" "$flowcell_name"
