@@ -3,8 +3,10 @@
 DIR_TO_WATCH="$1"
 DIR_TO_WATCH="${DIR_TO_WATCH%/}"
 if [ -z "$DIR_TO_WATCH" ]; then
-  echo "Provide a base directory to watch";
-  echo "Example: monitor_conversion_ready.sh /my/home/data_dir"
+  echo "Provide a full path directory to watch";
+  echo "The script assumes a structure after the directory to watch as /Analysis/[analysis_num]/Data"
+  echo "It will process any folder in the given directory where a Secondary_Analysis_Complete.txt is created"
+  echo "Example: monitor_conversion_ready.sh [full path to directory to watch]"
   exit 1
 fi
 
@@ -21,11 +23,15 @@ ANALYSIS_COMPLETE_FILE="Secondary_Analysis_Complete.txt"
 
 process_folder() {
     local flowcell_folder="$1"
-    echo "Processing: $flowcell_folder"
     local data_dir="${flowcell_folder%%"$ANALYSIS_COMPLETE_FILE"}"
-    echo "data_dir: $data_dir"
     local run_name="${data_dir##"$DIR_TO_WATCH"}"
-    echo "Processing run: $run_name"
+    run_name="${run_name#/}"
+
+    # Extract flowcell name and analysis number
+    local flowcell_name=$(echo "$run_name" | cut -d'/' -f1)
+    local analysis_num=$(echo "$run_name" | grep -oP 'Analysis/\K\d+' || echo "unknown")
+
+    echo "Processing flowcell: $flowcell_name (Analysis: $analysis_num)"
     "./upload_finished_analysis_files.sh" "$data_dir" "$run_name"
 }
 
