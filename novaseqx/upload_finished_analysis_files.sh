@@ -26,12 +26,9 @@ echo "Doing a maximum of ${MAX_PARALLEL_UPLOADS} parallel uploads using server: 
 
 get_sub_path() {
     local file=$1
-    echo "file = $file"
     local folder_depth=$2
-    echo "folder_depth = $folder_depth"
     if [ -n "$folder_depth" ]; then
         local rel_path=${file#"$FLOWCELL_DATA_DIRECTORY"/}
-        echo "rel_path = $rel_path"
         echo "$(echo "$rel_path" | rev | cut -d'/' -f1-$((folder_depth+1)) | rev)"
     else
         echo "$(basename "$file")"
@@ -53,8 +50,6 @@ upload_files() {
     while IFS= read -r file; do
         files+=("$file:$(get_sub_path "$file" "$folder_depth")")
     done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
-    echo "Found files "
-    echo "${files[@]}"
     echo "Uploading ${#files[@]} file(s)"
     printf "%s\n" "${files[@]}" | parallel -j $MAX_PARALLEL_UPLOADS -C ':' './upload-file.sh' {1} "$uri_base"/{2}
     wait
