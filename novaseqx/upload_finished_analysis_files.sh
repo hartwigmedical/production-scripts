@@ -64,6 +64,6 @@ upload_files() {
 
 upload_files ".fastq.gz" "fastq"
 
-for file in "${OTHER_FILES[@]}"; do
-    upload_files "$file" "other"
-done
+#for file in "${OTHER_FILES[@]}"; do
+#    upload_files "$file" "other"
+#done
