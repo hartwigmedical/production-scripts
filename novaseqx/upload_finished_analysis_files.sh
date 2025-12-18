@@ -5,7 +5,7 @@ export SERVER_URL="https://upload.test.hartwigmedicalfoundation.nl"
 export AUTH_TOKEN="enter-your-token"
 
 MAX_PARALLEL_UPLOADS=6
-OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "RunInfo.xml")
+OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "RunInfo.xml" "Demultiplex_Stats.csv" "Top_Unknown_Barcodes.csv")
 RUN_DIRECTORY="$1"
 RUN_NAME="$2"
 
