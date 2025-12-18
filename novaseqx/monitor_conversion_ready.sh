@@ -7,7 +7,7 @@ if [ -z "$BASE_DIR" ]; then
   exit 1
 fi
 
-ANALYSIS_COMPLETE_FILE="/Analysis/1/Data/Secondary_Analysis_Complete.txt"
+ANALYSIS_COMPLETE_FILE="Analysis/1/Data/Secondary_Analysis_Complete.txt"
 
 process_folder() {
     local file="$1"
@@ -19,8 +19,8 @@ process_folder() {
 
 echo "Monitoring $BASE_DIR for new $ANALYSIS_COMPLETE_FILE files"
 inotifywait -m -r -e close_write --format '%w%f' "$BASE_DIR" | while read -r file; do
-    if [[ $(basename "$file") == "$ANALYSIS_COMPLETE_FILE" ]]; then
-        dir="$(dirname "$file")"
+  echo "$file"
+    if [[ "$file" == *"$ANALYSIS_COMPLETE_FILE" ]]; then
         process_folder "$file"
     fi
 done
