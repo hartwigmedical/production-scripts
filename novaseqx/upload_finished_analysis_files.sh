@@ -41,7 +41,7 @@ upload_files() {
     # Keeps the structure of the folders counting from the end
     # e.g. runfolder/f1/f2/file.txt with depth 1 would keep f2/file.txt
     local folder_depth=$3
-
+    echo
     echo "----------$pattern------------"
     local uri_base="novaseq/$FLOWCELL_ID/$folder"
     echo "Starting to upload $pattern files to $uri_base"
@@ -56,7 +56,6 @@ upload_files() {
     wait
 
     echo "Done uploading the $pattern files"
-    echo
 }
 
 upload_files ".fastq.gz" "fastq"
