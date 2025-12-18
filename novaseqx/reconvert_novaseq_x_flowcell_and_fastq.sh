@@ -34,10 +34,10 @@ percenatage_undetermined=$(echo "${yield_undetermined}/${yield_total}*10000" | b
 q30_average=$(echo "${metrics_data}" | awk 'BEGIN {FS=OFS=","} ; {sum+=$10; ++n} END {print sum/n *100}')
 
 flowcell_object_id=$(hmf_api_get "flowcells?flowcell_id=${flowcell}" |jq -r '.[] | .id')
-hmf_api_patch -c flowcells -o ${flowcell_object_id} -f yld -v ${yield_total}
-hmf_api_patch -c flowcells -o ${flowcell_object_id} -f q30 -v ${q30_average}
-hmf_api_patch -c flowcells -o ${flowcell_object_id} -f undet_rds -v ${yield_undetermined}
-hmf_api_patch -c flowcells -o ${flowcell_object_id} -f undet_rds_p -v ${percenatage_undetermined}
+hmf_api_patch -c flowcells -o ${flowcell_object_id} -f yld -v ${yield_total} -e
+hmf_api_patch -c flowcells -o ${flowcell_object_id} -f q30 -v ${q30_average} -e
+hmf_api_patch -c flowcells -o ${flowcell_object_id} -f undet_rds -v ${yield_undetermined} -e
+hmf_api_patch -c flowcells -o ${flowcell_object_id} -f undet_rds_p -v ${percenatage_undetermined} -e
 
 # Patch Fastq
 echo "${metrics_data}" | while read line
