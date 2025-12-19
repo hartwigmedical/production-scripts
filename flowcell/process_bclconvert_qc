@@ -51,10 +51,12 @@ function main() {
         if [[ "${flowcell_name}" == NX* ]]; then
             FORENSICS_BUCKET="fastq-input-prod-1/novaseq"
             set_required_files "X"
-        else
+        elif [[ "${flowcell_name}" == NX* ]]; then
             FORENSICS_BUCKET="bcl-forensics-prod-1"
             [[ "${flowcell_status}" == "Converted" || "${flowcell_status}" == "Failed" ]] || die "Unexpected status [${flowcell_status}] in API [$info]"
             set_required_files "6000"
+        else
+            die "Sequencer of type ${flowcell_name} not supported"
         fi
         flowcell_forensics_url=$(get_forensics_url "${FORENSICS_BUCKET}" "${flowcell_id}") || die "Unable to find forensics [$info]"
         seq_run=$(basename "${flowcell_forensics_url}")
