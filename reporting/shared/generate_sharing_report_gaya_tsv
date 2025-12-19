@@ -45,20 +45,20 @@ info "Done generating sharing DB TSV of GENAYA cohort [$GAYA_SHARED_WITH_EXTERNA
 info "Copying output file to final destination [$DESTINATION]"
 cp "$GAYA_SHARED_WITH_EXTERNAL_IDS" "$DESTINATION"
 
-#info "Removing tmp dir [$wd]"
-#rm -r "$wd"
+info "Removing tmp dir [$wd]"
+rm -r "$wd"
 
-#info "Starting sync gaya reporting overview to nas"
-#nas_loc="/volume1/web/overviews/reporting"
-#
-### Sanity check
-#if [[ ! -f "${UPLOAD_FILE}" ]]; then
-#    error "Source file does not exist (${UPLOAD_FILE})"
-#fi
-#
-#info "START with uploading file ${UPLOAD_FILE} with date $(date '+%y%m%d')"
-#info " Syncing ${UPLOAD_FILE} to NAS (to ${nas_loc})"
-#copy_file_to_nas "${UPLOAD_FILE}" "${nas_loc}/"
-#copy_file_to_nas "${UPLOAD_FILE}" "${nas_loc}/gaya_shared.txt"
-#info "  File updated (see https://hmf-nas.synology.me/overviews/reporting/)"
-#info "DONE with syncing file ${UPLOAD_FILE} to nas"
+info "Starting sync gaya reporting overview to nas"
+nas_loc="/volume1/web/overviews/reporting"
+
+## Sanity check
+if [[ ! -f "${UPLOAD_FILE}" ]]; then
+    error "Source file does not exist (${UPLOAD_FILE})"
+fi
+
+info "START with uploading file ${UPLOAD_FILE} with date $(date '+%y%m%d')"
+info " Syncing ${UPLOAD_FILE} to NAS (to ${nas_loc})"
+/data/repos/scripts/nas/copy_file_to_nas "${UPLOAD_FILE}" "${nas_loc}/"
+/data/repos/scripts/nas/copy_file_to_nas "${UPLOAD_FILE}" "${nas_loc}/gaya_shared.txt"
+info "  File updated (see https://hmf-nas.synology.me/overviews/reporting/)"
+info "DONE with syncing file ${UPLOAD_FILE} to nas"
