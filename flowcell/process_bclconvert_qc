@@ -10,7 +10,6 @@ CONVERSION_REPORT_ERR="hmf_conversion_report.err"
 SAMPLES_REPORT="hmf_samples_report.tsv"
 RUN_REPORT="hmf_run_report.tsv"
 
-FORENSICS_BUCKET="bcl-forensics-prod-1"
 NAS_REPORT_PATH="/volume1/reports/bclconvert"
 NAS_WEB_REPORT_PATH="/volume1/web/qc/conversion"
 
@@ -18,14 +17,6 @@ command -v "$PARSE_SCRIPT" >/dev/null || die "Dependency not found: $PARSE_SCRIP
 command -v "$ROUNDING_SCRIPT" >/dev/null || die "Dependency not found: $ROUNDING_SCRIPT"
 command -v "hmf_api_get" >/dev/null || die "Dependency not found: hmf_api_get"
 command -v "sync_dir_to_nas" >/dev/null || die "Dependency not found: sync_dir_to_nas"
-
-error_log="output/results/Logs/Errors.log"
-samplesheet_csv="input/SampleSheet.csv"
-runinfo_xml="input/RunInfo.xml"
-demux_csv="output/results/Reports/Demultiplex_Stats.csv"
-quality_csv="output/results/Reports/Quality_Metrics.csv"
-top_unknown_csv="output/results/Reports/Top_Unknown_Barcodes.csv"
-required_files=("$error_log" "$samplesheet_csv" "$runinfo_xml" "$demux_csv" "$quality_csv" "$top_unknown_csv")
 
 [[ "$(hostname)" =~ ^ops-vm-prod ]] || die "This script is meant to be executed from ops-vm only!"
 
@@ -40,6 +31,8 @@ if [[ ! $1 || $1 == "-h" || $1 == "--help" ]]; then
 fi
 flowcells_ids=("$@")
 
+declare -a required_files
+
 function main() {
     script="$(basename $0)"
     tmpdir="/tmp/${script}/$(date '+%y%m%d%M%S')"
@@ -47,21 +40,27 @@ function main() {
     mkdir -p "${tmpdir}" || die "Unable to create tmp dir [$info]"
 
     for flowcell_id in "${flowcells_ids[@]}"; do
-
         info="$flowcell_id"
         info "Start processing flowcell [${info}]"
 
-        flowcell_forensics_url=$(get_forensics_url "${FORENSICS_BUCKET}" "${flowcell_id}") || die "Unable to find forensics [$info]"
         flowcell_api_info=$(get_flowcell_from_api "${flowcell_id}") || die "Unable to find flowcell in API [$info]"
         flowcell_status=$(jq -r '.status' <<< "$flowcell_api_info")
         flowcell_name=$(jq -r '.name' <<< "$flowcell_api_info")
         info="${info},${flowcell_name},${flowcell_status}"
 
-        [[ "${flowcell_status}" == "Converted" || "${flowcell_status}" == "Failed" ]] || die "Unexpected status [${flowcell_status}] in API [$info]"
-
+        if [[ "${flowcell_name}" == NX* ]]; then
+            FORENSICS_BUCKET="fastq-input-prod-1/novaseq"
+            set_required_files "X"
+        elif [[ "${flowcell_name}" == NX* ]]; then
+            FORENSICS_BUCKET="bcl-forensics-prod-1"
+            [[ "${flowcell_status}" == "Converted" || "${flowcell_status}" == "Failed" ]] || die "Unexpected status [${flowcell_status}] in API [$info]"
+            set_required_files "6000"
+        else
+            die "Sequencer of type ${flowcell_name} not supported"
+        fi
+        flowcell_forensics_url=$(get_forensics_url "${FORENSICS_BUCKET}" "${flowcell_id}") || die "Unable to find forensics [$info]"
         seq_run=$(basename "${flowcell_forensics_url}")
         outdir="${tmpdir}/${seq_run}"
-
         conversion_report_tsv="${outdir}/${CONVERSION_REPORT}"
         conversion_report_err="${outdir}/${CONVERSION_REPORT_ERR}"
         samples_report_tsv="${outdir}/${SAMPLES_REPORT}"
@@ -117,6 +116,27 @@ function main() {
     echo "rm -r ${tmpdir}"
     echo ""
 }
+
+function set_required_files() {
+    type=$1
+    if [[ ${type} == "X" ]]; then
+        error_log="other/Errors.log"
+        samplesheet_csv="other/SampleSheet.csv"
+        runinfo_xml="other/RunInfo.xml"
+        demux_csv="other/Demultiplex_Stats.csv"
+        quality_csv="other/Reports/Quality_Metrics.csv"
+        top_unknown_csv="other/Top_Unknown_Barcodes.csv"
+    else
+        samplesheet_csv="input/SampleSheet.csv"
+        runinfo_xml="input/RunInfo.xml"
+        error_log="output/results/Logs/Errors.log"
+        demux_csv="output/results/Reports/Demultiplex_Stats.csv"
+        quality_csv="output/results/Reports/Quality_Metrics.csv"
+        top_unknown_csv="output/results/Reports/Top_Unknown_Barcodes.csv"
+    fi
+    required_files=("$error_log" "$samplesheet_csv" "$runinfo_xml" "$demux_csv" "$quality_csv" "$top_unknown_csv")
+}
+
 
 function get_flowcell_from_api () {
     local flowcell_id=$1 && shift

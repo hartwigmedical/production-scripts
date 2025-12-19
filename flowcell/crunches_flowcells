@@ -6,9 +6,11 @@ command -v hmf_api_get > /dev/null || die "Dependency not found [hmf_api_get]"
 
 [[ "$(hostname)" =~ ^crunch|sts ]] && die "Not supposed to check flowcells from crunch/sts directly"
 
+SHOW_NUM_NOVASEQ_X=6
+
 servers=(sts1.prod-1 sts2.prod-1)
 
-main () {
+print_flowcells_novaseq_6000 () {
     declare -a all_stdout
     for server in "${servers[@]}"; do
         if [[ "${server}" =~ ^sts ]]; then
@@ -113,4 +115,24 @@ function retrieve_hmf_api_info () {
 
 function join_by { local IFS="$1"; shift; echo "$*"; }
 
-main
+print_flowcells_novaseq_x () {
+    for uploaded_flowcell in $(gsutil ls gs://fastq-input-prod-1/novaseq | tail -n ${SHOW_NUM_NOVASEQ_X}); do
+        results=$(process_flowcell "${uploaded_flowcell}")
+        echo -e "${results}"
+    done
+}
+
+function process_flowcell_x () {
+    local flowcell=$1 && shift
+    sheet="${flowcell}other/SampleSheet.csv"
+    sheet_content=$(gsutil cat "$sheet" | tr -d '\r')
+    sheet_header=$(sed -n '/Sample_ID/q;p' <<< "$sheet_content")
+
+    run_base=$(basename "${flowcell}")
+    exp_name=$(grep "RunName" <<< "${sheet_header}" | cut -d',' -f 2)
+
+    printf "%s\t%s\t%s\t%s\t%s\n" "$exp_name" "$run_base" "Unknown" "seq" "HMF=Ready,GCP=Uploaded"
+}
+
+print_flowcells_novaseq_6000
+print_flowcells_novaseq_x
