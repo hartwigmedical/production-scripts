@@ -8,7 +8,7 @@ command -v hmf_api_get > /dev/null || die "Dependency not found [hmf_api_get]"
 
 servers=(sts1.prod-1 sts2.prod-1)
 
-main () {
+print_flowcells_novaseq_6000 () {
     declare -a all_stdout
     for server in "${servers[@]}"; do
         if [[ "${server}" =~ ^sts ]]; then
@@ -113,7 +113,7 @@ function retrieve_hmf_api_info () {
 
 function join_by { local IFS="$1"; shift; echo "$*"; }
 
-main_x () {
+print_flowcells_novaseq_x () {
     for uploaded_flowcell in $(gsutil ls gs://fastq-input-prod-1/novaseq | tail -n 6); do
         results=$(process_flowcell "${uploaded_flowcell}")
         echo -e "${results}"
@@ -132,5 +132,5 @@ function process_flowcell_x () {
     printf "%s\t%s\t%s\t%s\t%s\n" "$exp_name" "$run_base" "Unknown" "seq" "HMF=Ready,GCP=Uploaded"
 }
 
-main
-main_x
+print_flowcells_novaseq_6000
+print_flowcells_novaseq_x
