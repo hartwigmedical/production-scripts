@@ -4,7 +4,7 @@ set -e
 source message_functions || exit 1
 
 CODEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CALC_YIELD_SCRIPT="${CODEDIR}/../utilityscripts/get_yield_from_read_count_and_excluded_base_percentage.py"
+CALC_YIELD_SCRIPT="${CODEDIR}/get_yield_from_read_count_and_excluded_base_percentage.py"
 
 REF_TARGET_YIELD=100
 TUM_TARGET_YIELD=300
