@@ -6,7 +6,8 @@ if [[ -z $1 || $1 == "-h" || $1 == "--help" ]]; then
     echo "---"
     echo " Descr: Move fastq samples from fastq-input-prod-1 to hmf-crunch-innovation"
     echo " Usage: $(basename $0) submission [output folder postfix]"
-    echo " Exmpl: $(basename $0) HMFregINN2207 [test]"
+    echo " Exmpl: $(basename $0) HMFregINN2207"
+    echo " Info: If no postfix is given the current year will be used instead"
     echo "---"
     exit 1
 fi
