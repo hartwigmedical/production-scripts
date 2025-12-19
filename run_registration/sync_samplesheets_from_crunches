@@ -41,5 +41,5 @@ for server in sts1.prod-1 sts2.prod-1; do
 done
 
 # NovaSeq X
-gsutil -m cp "gs://lama-prod-1/sample-sheets/*_SampleSheet.csv" "${local_sheets_dir}/" || die "Coould not copy all samplesheets to local"
+gsutil -m cp "gs://lama-prod-1/sample-sheets/*_SampleSheet.csv" "${local_sheets_dir}/" || die "Could not copy all samplesheets to local"
 gsutil -m cp "gs://lama-prod-1/sample-sheets/*_SampleSheet.csv" "${samplesheets_bucket}/" || die "Coould not copy all samplesheets to GCP"
