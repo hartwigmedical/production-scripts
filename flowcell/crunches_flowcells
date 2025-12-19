@@ -117,7 +117,7 @@ function join_by { local IFS="$1"; shift; echo "$*"; }
 
 print_flowcells_novaseq_x () {
     for uploaded_flowcell in $(gsutil ls gs://fastq-input-prod-1/novaseq | tail -n ${SHOW_NUM_NOVASEQ_X}); do
-        results=$(process_flowcell "${uploaded_flowcell}")
+        results=$(process_flowcell_x "${uploaded_flowcell}")
         echo -e "${results}"
     done
 }
