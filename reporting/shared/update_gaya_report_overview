@@ -4,7 +4,7 @@ source locate_files || exit 1
 source message_functions || exit 1
 
 task_id="updateGayaReportingOverview"
-rep_src_file_sharing="/data/ops/lims/prod/gaya_shared.tsv"
+rep_src_file_sharing="/data/ops/lims/prod/genaya_shared_reporting_db.tsv"
 nas_loc="/volume1/web/overviews/reporting"
 
 ## Sanity check
@@ -16,6 +16,6 @@ fi
 info "START with ${task_id} $(date '+%y%m%d')"
 info " Syncing ${rep_src_file_sharing} to NAS (to ${nas_loc})"
 copy_file_to_nas "${rep_src_file_sharing}" "${nas_loc}/"
-copy_file_to_nas "${rep_src_file_sharing}" "${nas_loc}/gaya_shared.txt"
+copy_file_to_nas "${rep_src_file_sharing}" "${nas_loc}/genaya_shared_reporting_db.txt"
 info "  File updated (see https://hmf-nas.synology.me/overviews/reporting/)"
 info "DONE with ${task_id}"

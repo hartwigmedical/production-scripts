@@ -5,9 +5,8 @@ source message_functions || exit 1
 set -e
 
 GAYA_SHARED=gaya_shared_intern.tsv
-GAYA_SHARED_WITH_EXTERNAL_IDS=gaya_shared.tsv
+GAYA_SHARED_WITH_EXTERNAL_IDS=genaya_shared_reporting_db.tsv
 DESTINATION="/data/ops/lims/prod"
-UPLOAD_FILE="${DESTINATION}/${GAYA_SHARED_WITH_EXTERNAL_IDS}"
 NA_CHAR="N/A"
 wd="$(mktemp -d)"
 
