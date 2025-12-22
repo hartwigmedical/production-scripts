@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+source message_functions || exit 1
+
+print "Generating sharing database for GENAYA cohort"
+/data/repos/production-scripts/reporting/shared/generate_sharing_report_gaya_tsv
+
+print "Update sharing database for GENAYA cohort op NAS"
+/data/repos/production-scripts/reporting/shared/update_gaya_report_overview
+
+print "DONE"
