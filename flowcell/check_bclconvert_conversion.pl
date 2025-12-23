@@ -29,6 +29,7 @@ my $REL_DCSV_PATH = 'Fastq/Reports/Demultiplex_Stats.csv';
 my $REL_RXML_PATH = 'Fastq/Reports/RunInfo.xml';
 my $REL_SSHT_PATH = 'Fastq/Reports/SampleSheet.csv';
 
+my $NOVASEQX = "NovaSeqX";
 my $NOVASEQ = "NovaSeq";
 my $NEXTSEQ = "NextSeq";
 my $ISEQ = "ISeq";
@@ -36,6 +37,7 @@ my $HISEQ = "HiSeq";
 
 # The official QC settings are in the platforms endpoint of HMFAPI (the copy here is for convenience)
 my %SETTINGS_PER_PLATFORM = (
+    $NOVASEQX => {'min_flowcell_q30' => 85, 'min_sample_yield' => 1e9, 'max_undetermined' =>  8, 'yield_factor' => 1e6},
     $NOVASEQ => {'min_flowcell_q30' => 85, 'min_sample_yield' => 1e9, 'max_undetermined' =>  8, 'yield_factor' => 1e6},
     $NEXTSEQ => {'min_flowcell_q30' => 75, 'min_sample_yield' => 1e9, 'max_undetermined' => 50, 'yield_factor' => 1e6},
     $ISEQ    => {'min_flowcell_q30' => 75, 'min_sample_yield' => 5e6, 'max_undetermined' => 50, 'yield_factor' => 1},
@@ -447,7 +449,9 @@ sub readSampleSheet{
         if ($fields[0] =~ /Experiment(.)*Name/){
             my $run_name = $fields[1] || 'NA';
             $output{run_name} = $run_name;
-            if ($run_name =~ m/^NO\d{2}-/){
+            if ($run_name =~ m/^NX\d{2}-/){
+                $output{platform} = $NOVASEQX;
+            elif ($run_name =~ m/^NO\d{2}-/){
                 $output{platform} = $NOVASEQ;
             }elsif ($run_name =~ m/^NS\d{2}-/){
                 $output{platform} = $NEXTSEQ;

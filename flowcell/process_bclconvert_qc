@@ -50,11 +50,11 @@ function main() {
 
         if [[ "${flowcell_name}" == NX* ]]; then
             FORENSICS_BUCKET="fastq-input-prod-1/novaseq"
-            set_required_files "X"
-        elif [[ "${flowcell_name}" == NX* ]]; then
+            set_required_files "NX"
+        elif [[ "${flowcell_name}" == NO* ]]; then
             FORENSICS_BUCKET="bcl-forensics-prod-1"
             [[ "${flowcell_status}" == "Converted" || "${flowcell_status}" == "Failed" ]] || die "Unexpected status [${flowcell_status}] in API [$info]"
-            set_required_files "6000"
+            set_required_files "NO"
         else
             die "Sequencer of type ${flowcell_name} not supported"
         fi
@@ -85,6 +85,7 @@ function main() {
         info "  Creating conversion report [$info]"
         ${PARSE_SCRIPT} -sampleSheet "${outdir}/SampleSheet.csv" -runInfoXml "${outdir}/RunInfo.xml" \
           -qualityCsv "${outdir}/Quality_Metrics.csv" -demuxCsv "${outdir}/Demultiplex_Stats.csv" \
+          -yieldFactor "1000000" -decimals "1" \
         > "${conversion_report_tsv}" 2> "${conversion_report_err}" || die "Script $PARSE_SCRIPT exited with non zero exit status"
 
         if [[ -s "${conversion_report_err}" ]]; then
@@ -119,22 +120,23 @@ function main() {
 
 function set_required_files() {
     type=$1
-    if [[ ${type} == "X" ]]; then
-        error_log="other/Errors.log"
+    if [[ ${type} == "NX" ]]; then
         samplesheet_csv="other/SampleSheet.csv"
         runinfo_xml="other/RunInfo.xml"
         demux_csv="other/Demultiplex_Stats.csv"
-        quality_csv="other/Reports/Quality_Metrics.csv"
+        quality_csv="other/Quality_Metrics.csv"
         top_unknown_csv="other/Top_Unknown_Barcodes.csv"
-    else
+        required_files=("$samplesheet_csv" "$runinfo_xml" "$demux_csv" "$quality_csv" "$top_unknown_csv")
+    elif [[ ${type} == "NO" ]]; then
         samplesheet_csv="input/SampleSheet.csv"
         runinfo_xml="input/RunInfo.xml"
         error_log="output/results/Logs/Errors.log"
         demux_csv="output/results/Reports/Demultiplex_Stats.csv"
         quality_csv="output/results/Reports/Quality_Metrics.csv"
         top_unknown_csv="output/results/Reports/Top_Unknown_Barcodes.csv"
+        required_files=("$error_log" "$samplesheet_csv" "$runinfo_xml" "$demux_csv" "$quality_csv" "$top_unknown_csv")
     fi
-    required_files=("$error_log" "$samplesheet_csv" "$runinfo_xml" "$demux_csv" "$quality_csv" "$top_unknown_csv")
+    echo "${required_files[@]}"
 }
 
 
