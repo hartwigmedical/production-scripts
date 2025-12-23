@@ -85,7 +85,6 @@ function main() {
         info "  Creating conversion report [$info]"
         ${PARSE_SCRIPT} -sampleSheet "${outdir}/SampleSheet.csv" -runInfoXml "${outdir}/RunInfo.xml" \
           -qualityCsv "${outdir}/Quality_Metrics.csv" -demuxCsv "${outdir}/Demultiplex_Stats.csv" \
-          -yieldFactor "1000000" -decimals "1" \
         > "${conversion_report_tsv}" 2> "${conversion_report_err}" || die "Script $PARSE_SCRIPT exited with non zero exit status"
 
         if [[ -s "${conversion_report_err}" ]]; then
