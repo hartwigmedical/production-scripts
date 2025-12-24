@@ -68,3 +68,13 @@ upload_files ".fastq.gz" "fastq"
 for file in "${OTHER_FILES[@]}"; do
     upload_files "$file" "other"
 done
+
+# RunParameters file is in different folder
+echo
+echo "----------RunParameters.xml------------"
+run_parameters_file=$(echo ${FLOWCELL_DATA_DIRECTORY} | cut -d / -f1-4,6-7)
+run_parameters_file=$(echo "${run_parameters_file}/RunParameters.xml")
+uri="novaseq/${FLOWCELL_ID}/other/RunParameters.xml"
+echo "Starting to upload RunParameters.xml file to ${uri}"
+./upload-file.sh ${run_parameters_file} ${uri}
+echo "Done uploading the RunParameters.xml file"
