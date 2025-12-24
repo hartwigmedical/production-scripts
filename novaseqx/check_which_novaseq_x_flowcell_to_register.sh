@@ -2,9 +2,9 @@
 
 source message_functions || exit 1
 
-TMP_ALL="tmp_all.txt"
+TMP_ALL="/tmp/tmp_all.txt"
 GCP_ALL="gs://fastq-input-prod-1/novaseq"
-TMP_PROCESSED="tmp_processed.txt"
+TMP_PROCESSED="/tmp/tmp_processed.txt"
 GCP_PROCESSED="gs://hmf-ops-data/ops/novaseqx/processed.txt"
 
 info "Listing all folders in ${GCP_ALL}"
