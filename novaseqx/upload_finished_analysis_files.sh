@@ -72,4 +72,4 @@ done
 # RunParameters file is in different folder
 run_parameters_file=$(echo ${FLOWCELL_DATA_DIRECTORY} | cut -d / -f1-4,6-7)
 run_parameters_file=$(echo "${run_parameters_file}/RunParameters.xml")
-./upload-file.sh ${run_parameters_file} "novaseq/$FLOWCELL_ID/other/RunParameters.xml"
+./upload-file.sh ${run_parameters_file} "novaseq/${FLOWCELL_ID}/other/RunParameters.xml"
