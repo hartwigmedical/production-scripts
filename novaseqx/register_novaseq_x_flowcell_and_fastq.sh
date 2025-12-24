@@ -22,6 +22,10 @@ sequencer=$(echo ${sequencing_run} | cut -d_ -f2)
 run=$(echo ${sequencing_run} | cut -d_ -f3)
 flowcell=$(echo ${sequencing_run} | cut -d_ -f4 | sed 's/^.\{1\}//')
 
+if [[ ! $(hmf_api_get "flowcells?flowcell_id=${flowcell}" | jq -r) == "[]" ]]; then
+    die "Flowcell already registered, look into script reconvert_novaseq_x_flowcell_and_fastq.sh"
+fi
+
 samplesheet_file="gs://${FASTQ_BUCKET}/novaseq/${sequencing_run}/other/SampleSheet.csv"
 name=$(gsutil cat ${samplesheet_file} | grep RunName | cut -d, -f2)
 
