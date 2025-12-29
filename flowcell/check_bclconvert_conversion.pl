@@ -451,7 +451,7 @@ sub readSampleSheet{
             $output{run_name} = $run_name;
             if ($run_name =~ m/^NX\d{2}-/){
                 $output{platform} = $NOVASEQX;
-            elif ($run_name =~ m/^NO\d{2}-/){
+            }elsif ($run_name =~ m/^NO\d{2}-/){
                 $output{platform} = $NOVASEQ;
             }elsif ($run_name =~ m/^NS\d{2}-/){
                 $output{platform} = $NEXTSEQ;

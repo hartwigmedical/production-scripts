@@ -135,7 +135,6 @@ function set_required_files() {
         top_unknown_csv="output/results/Reports/Top_Unknown_Barcodes.csv"
         required_files=("$error_log" "$samplesheet_csv" "$runinfo_xml" "$demux_csv" "$quality_csv" "$top_unknown_csv")
     fi
-    echo "${required_files[@]}"
 }
 
 
