@@ -19,8 +19,6 @@ info "Extract only the reports/shared for GENAYA cohort"
 shared_reports_gaya=$(jq '[ .[] |  select(.report_created.cohort == "GENAYA") ]' <<< "${shared_reports}")
 
 info "Creating overview of all reported samples of GENAYA cohort"
-printf "%s\t%s\t%s\t%s\t%s\t%s\n" \
-   tumorBarcode sampleId cohort createDate shareDate reportType > "$GAYA_SHARED"
 jq --arg na "$NA_CHAR" -r '.[] | [
     .report_created.barcode//$na,
     .report_created.sample_name//$na,
