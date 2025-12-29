@@ -446,7 +446,7 @@ sub readSampleSheet{
         next if $_ eq "";
         my @fields = split(",", $_);
 
-        if ($fields[0] =~ /Experiment(.)*Name/){
+        if ($fields[0] =~ /Experiment|Run(.)*Name/){
             my $run_name = $fields[1] || 'NA';
             $output{run_name} = $run_name;
             if ($run_name =~ m/^NX\d{2}-/){
