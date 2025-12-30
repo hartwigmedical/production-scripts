@@ -423,10 +423,6 @@ sub printTableForLevelSortedByYield{
 sub readSampleSheet{
     my ($csv_file) = @_;
     
-    # SampleSheet file has windows returns
-    my $return_str = $/;
-    $/ = "\r\n";
-    
     my %output;
     $output{samples} = {};
     $output{run_name} = 'NO_RUNNAME_FROM_SAMPLESHEET';
@@ -480,7 +476,6 @@ sub readSampleSheet{
         }
     }
     close FILE;
-    $/ = $return_str; # reset return string
     return(\%output);
 }
 

@@ -75,7 +75,9 @@ function main() {
             gsutil -q cp -r "${file_url}" "${outdir}" || die "Unable to copy file [$file_url]"
         done
 
-        flowcell_name_from_sheet="$(grep '^Experiment' "${outdir}/SampleSheet.csv" | cut -d',' -f2 | tr -d '\r')"
+        dos2unix "${outdir}/SampleSheet.csv" # Force sensible line endings (LF instead of CRLF)
+
+        flowcell_name_from_sheet="$(grep -E '^Experiment|Run' "${outdir}/SampleSheet.csv" | cut -d',' -f2 | tr -d '\r')"
         nas_dir_name="${flowcell_name_from_sheet}__${seq_run}"
         nas_dir_path="${NAS_REPORT_PATH}/${nas_dir_name}"
         nas_web_dir_path="${NAS_WEB_REPORT_PATH}/${nas_dir_name}"
