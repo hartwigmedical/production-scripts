@@ -2,6 +2,14 @@
 
 source message_functions || exit 1
 
+if [[ -z "$1" || $1 == "-h" || $1 == "--help" ]]; then
+    echo "---"
+    echo " Usage: ${SCRIPT} <to_register_json>"
+    echo "        ${SCRIPT} 251228_CORE_FR12345678.json"
+    echo "---"
+    exit 1
+fi
+
 json=$1
 api_url='http://api.prod-1/hmf/v2/action/register'
 
