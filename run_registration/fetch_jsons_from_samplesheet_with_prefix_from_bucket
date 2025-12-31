@@ -94,7 +94,7 @@ else # Normal case
         info " nohup register_jsons_through_lama > ${register_log} &"
         info ""
         info "TODO: Afterwards you can check the registration success rate with:"
-        info " echo \"Amount IN: \"\$( ls ${JSONS_LOC}/*json | wc -l); echo \"Amount OK: \"\$( cat ${register_log} | grep created | wc -l) "
+        info " echo \"Amount IN: \"\$( ls ${JSONS_LOC}/*json | wc -l); echo \"Amount OK: \"\$( cat ${register_log} | grep {\"statusCode\":201 | wc -l) "
         info ""
         info "TODO: If successful, clean up logs and jsons with:"
         info " move_registration_jsons_and_logs ${prefix} ${curr_date}"
