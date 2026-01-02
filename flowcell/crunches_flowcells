@@ -116,6 +116,7 @@ function retrieve_hmf_api_info () {
 function join_by { local IFS="$1"; shift; echo "$*"; }
 
 print_flowcells_novaseq_x () {
+    info "Checking flowcells for gs://fastq-input-prod-1/novaseq/"
     for uploaded_flowcell in $(gsutil ls gs://fastq-input-prod-1/novaseq | tail -n ${SHOW_NUM_NOVASEQ_X}); do
         results=$(process_flowcell_x "${uploaded_flowcell}")
         echo -e "${results}"
