@@ -88,7 +88,7 @@ if [[ "${to_process_count}" -gt 0 ]]; then
       echo "set -e"
       echo "echo '[INFO] Running perform_shallow_qc_gcp...'"
       echo "  perform_shallow_qc_gcp ${to_process[*]}"
-      echo "echo [INFO] Showing ShallowSeq results'"
+      echo "echo '[INFO] Showing ShallowSeq results'"
       echo "  cat '${tmp_results_file}' | cut -f -9"
       echo "echo '[INFO] Adding set names to archive log file in bucket...'"
       echo "  gsutil cp '${tmp_archive_file}' '${archive_file}'"
