@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+current_date=$(date +%Y-%m-%d)
+
+confirmation_orders=$(curl -s -X 'GET' -H 'accept: */*' 'http://lama.prod-1/api/hss/order-confirmations' | jq -r '.[]')
+
+echo -e "Confirmation Order\tDays\tStatus"
+for confirmation_order in ${confirmation_orders}; do
+    completion_date=$(curl -s -X 'GET' "http://lama.prod-1/api/hss/order-confirmation/${confirmation_order}" -H 'accept: */*' | jq -r '.completionDate')
+    if [[ ${completion_date} == "null" ]];
+    then
+        date_diff="NA"
+    else
+        date_diff=$((($(date -d ${current_date} +%s) - $(date -d ${completion_date} +%s)) / 86400))
+    fi
+
+    if [[ ${date_diff} -gt 90 ]]; # Assumed to have retention time of 90 days.
+    then
+        status="Delete"
+    else
+        status="Store"
+    fi
+
+    echo -e "${confirmation_order}\t${date_diff}\t${status}"
+done
