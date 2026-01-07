@@ -74,8 +74,14 @@ do
         fi
 
         bucket_path="${FASTQ_BUCKET}/novaseq/${sequencing_run}/fastq"
-        filename_r1=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R1_001.fastq.gz" | cut -d/ -f7)
-        filename_r2=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R2_001.fastq.gz" | cut -d/ -f7)
+        tmp_filename_r1=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R1_001.fastq.gz" | cut -d/ -f7)
+        tmp_filename_r2=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R2_001.fastq.gz" | cut -d/ -f7)
+
+        filename_r1=$(echo "$(echo ${tmp_filename_r1} | cut -d _ -f1)_${flowcell}_$(echo ${tmp_filename_r1} | cut -d _ -f2-)")
+        filename_r2=$(echo "$(echo ${tmp_filename_r2} | cut -d _ -f1)_${flowcell}_$(echo ${tmp_filename_r2} | cut -d _ -f2-)")
+
+        gsutil mv "gs://${bucket_path}/${tmp_filename_r1}" "gs://${bucket_path}/${filename_r1}"
+        gsutil mv "gs://${bucket_path}/${tmp_filename_r2}" "gs://${bucket_path}/${filename_r2}"
 
         sample_id=$(hmf_api_get "samples?barcode=${sample_barcode}" | jq -r '.[].id')
         lane_id=$(hmf_api_get "lanes?flowcell_id=${flowcell_id}&name=L00${lane}" | jq -r '.[].id')
