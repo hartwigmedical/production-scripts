@@ -82,8 +82,8 @@ fi
 setname_without_date=$(echo "${setname}" | cut -d_ -f2-)
 hmf_api_run_json=$(hmf_api_get "runs?context=DIAGNOSTIC&set_name_contains=${setname_without_date}")
 run_count=$(echo ${hmf_api_run_json} | jq 'map(select(.status != "Invalidated")) | length' | tr -d '"\n')
-if [[ ${run_count} > 0 ]]; then
-    warn "There already exist runs for ${barcode}: ${setname_without_date}"
+if [[ ${run_count} -gt 0 ]]; then
+    die "There already exist runs for ${barcode}: ${setname_without_date}"
 fi
 
 # VHIO checks
@@ -98,15 +98,13 @@ elif [[ ${ini} == "Somatic.ini" && ${submission} =~ ^Diagnostic* && ${tum_report
      warn "Sample from VHIO (${barcode}) detected with Somatic output, but no runs. Changed to ShallowSeq output"
 fi
 
-# HSS checks
-
 
 # Write request body
 request_body="\"isolationBarcode\": \"${barcode}\""
-if [ ! -z "${c2f_override}" ]; then
+if [ -n "${c2f_override}" ]; then
     request_body="${request_body},\n\"cram2fastq\": \"${c2f_override}\""
 fi
-if [ ! -z "${ini_override}" ]; then
+if [ -n "${ini_override}" ]; then
      request_body="${request_body},\n\"iniOverride\": \"${ini_override}\""
 fi
 request_body="{${request_body}}"
@@ -122,7 +120,7 @@ fi
 # Output request body (or not)
 if [[ ${check} == "true" ]]; then
     # info "Writing registration request json for LAMA to ${out_path}${setname}.json"
-    echo -e ${request_body} > "${out_path}${setname}.json"
+    echo -e "${request_body}" > "${out_path}${setname}.json"
 else
     die "Not writing registration request json for barcode ${barcode}"
 fi
