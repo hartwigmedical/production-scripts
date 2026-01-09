@@ -1,0 +1,32 @@
+#!/bin/bash
+set -euo pipefail
+
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <original.json> <modified.json>" >&2
+    exit 1
+fi
+
+ORIGINAL="$1"
+MODIFIED="$2"
+
+if [ ! -f "$ORIGINAL" ]; then
+    echo "Error: Original file not found: $ORIGINAL" >&2
+    exit 1
+fi
+
+if [ ! -f "$MODIFIED" ]; then
+    echo "Error: Modified file not found: $MODIFIED" >&2
+    exit 1
+fi
+
+# Create temporary formatted files
+TEMP_ORIGINAL=$(mktemp)
+TEMP_MODIFIED=$(mktemp)
+trap 'rm -f $TEMP_ORIGINAL $TEMP_MODIFIED' EXIT
+
+# Format both files consistently with jq (sorted keys, consistent indentation)
+jq . "$ORIGINAL" > "$TEMP_ORIGINAL"
+jq . "$MODIFIED" > "$TEMP_MODIFIED"
+
+# Output unified diff to stdout
+diff -u "$TEMP_ORIGINAL" "$TEMP_MODIFIED" || true
