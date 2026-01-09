@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common_utils.sh"
+
 DIR_TO_WATCH="$1"
 DIR_TO_WATCH="${DIR_TO_WATCH%/}"
 if [ -z "$DIR_TO_WATCH" ]; then
@@ -13,7 +16,7 @@ fi
 # Kill any existing inotifywait processes watching the same directory
 for pid in $(pgrep -x inotifywait); do
     if grep -q "$DIR_TO_WATCH" /proc/$pid/cmdline 2>/dev/null; then
-        echo "Killing existing inotifywait process (PID: $pid) watching $DIR_TO_WATCH..."
+        timed_echo "Killing existing inotifywait process (PID: $pid) watching $DIR_TO_WATCH..."
         kill -9 $pid
         sleep 1
     fi
@@ -30,15 +33,17 @@ process_folder() {
     local analysis_num=$(echo "$run" | grep -oP 'Analysis/\K\d+' || echo "unknown")
 
     echo
-    echo "Processing flowcell: $flowcell_name (Analysis: $analysis_num)"
+    timed_echo "Processing flowcell: $flowcell_name (Analysis: $analysis_num)"
     "./upload_finished_analysis_files.sh" "$data_dir" "$flowcell_name"
 }
 
 echo
-echo "Monitoring $DIR_TO_WATCH for new $ANALYSIS_COMPLETE_FILE files"
+timed_echo "Monitoring $DIR_TO_WATCH for new $ANALYSIS_COMPLETE_FILE files"
 echo
 inotifywait -m -r -e close_write --format '%w%f' "$DIR_TO_WATCH" | while read -r full_path; do
     if [[ "$full_path" == *"$ANALYSIS_COMPLETE_FILE" ]]; then
         process_folder "$full_path"
+    else
+        timed_echo "Ignoring: $full_path"
     fi
 done

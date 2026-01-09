@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common_utils.sh"
+
 # Export the needed server URL and authentication token to make sure the upload script works
 export SERVER_URL="https://upload.test.hartwigmedicalfoundation.nl"
 export AUTH_TOKEN="enter-your-token"
@@ -23,7 +26,7 @@ if [[ -z "$FLOWCELL_ID" ]]; then
     exit 1
 fi
 
-echo "Doing a maximum of ${MAX_PARALLEL_UPLOADS} parallel uploads using server: ${SERVER_URL}"
+timed_echo "Doing a maximum of ${MAX_PARALLEL_UPLOADS} parallel uploads using server: ${SERVER_URL}"
 
 get_sub_path() {
     local file=$1
@@ -43,7 +46,7 @@ upload_files() {
     # e.g. runfolder/f1/f2/file.txt with depth 1 would keep f2/file.txt
     local folder_depth=$3
     echo
-    echo "----------$pattern------------"
+    timed_echo "----------$pattern------------"
     local uri_base="novaseq/$FLOWCELL_ID/$folder"
 
     files=()
@@ -52,15 +55,15 @@ upload_files() {
     done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
 
     if [ ${#files[@]} -eq 0 ]; then
-        echo "No files found matching $pattern"
+        timed_echo "No files found matching $pattern"
         return
     fi
 
-    echo "Starting to upload $pattern (${#files[@]}) files to $uri_base"
+    timed_echo "Starting to upload $pattern (${#files[@]}) files to $uri_base"
     printf "%s\n" "${files[@]}" | parallel -j $MAX_PARALLEL_UPLOADS -C ':' './upload-file.sh' {1} "$uri_base"/{2}
     wait
 
-    echo "Done uploading the $pattern files"
+    log "Done uploading the $pattern files"
 }
 
 upload_files ".fastq.gz" "fastq"
@@ -71,10 +74,10 @@ done
 
 # RunParameters file is in different folder
 echo
-echo "----------RunParameters.xml------------"
+timed_echo "----------RunParameters.xml------------"
 run_parameters_file=$(echo ${FLOWCELL_DATA_DIRECTORY} | cut -d / -f1-4,6-7)
 run_parameters_file=$(echo "${run_parameters_file}/RunParameters.xml")
 uri="novaseq/${FLOWCELL_ID}/other/RunParameters.xml"
-echo "Starting to upload RunParameters.xml file to ${uri}"
+timed_echo "Starting to upload RunParameters.xml file to ${uri}"
 ./upload-file.sh ${run_parameters_file} ${uri}
-echo "Done uploading the RunParameters.xml file"
+timed_echo "Done uploading the RunParameters.xml file"
