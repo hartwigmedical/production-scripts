@@ -55,17 +55,22 @@ do
     info "Posted lane L00${x} for flowcell ${flowcell_id} into API"
 done
 
-echo "${metrics_data}" | while read line
+echo "${metrics_data}" | while read first_line; read second_line
 do
-    sample_barcode=$(echo "${line}" | cut -d, -f2)
-    r=$(echo "${line}" | cut -d, -f5)
-    if [[ ${sample_barcode} == "Undetermined" || ${r} == "2" ]]
+    sample_barcode=$(echo "${first_line}" | cut -d, -f2)
+    if [[ ${sample_barcode} == "Undetermined" ]]
     then
-        info "Undetermined or R2 file, thus ignore"
+        info "Undetermined, thus ignore"
     else
-        lane=$(echo "${line}" | cut -d, -f1)
-        yield=$(echo "${line}" | cut -d, -f6)
-        q30=$(echo "${line}" | cut -d, -f10)
+        lane=$(echo "${first_line}" | cut -d, -f1)
+        yield_r1=$(echo "${first_line}" | cut -d, -f6)
+        q30_r1=$(echo "${first_line}" | cut -d, -f10)
+        yield_r2=$(echo "${second_line}" | cut -d, -f6)
+        q30_r2=$(echo "${second_line}" | cut -d, -f10)
+
+        yield=$(echo "${yield_r1} + ${yield_r2}" | bc )
+        q30=$(echo "scale=2; (${q30_r1} + ${q30_r2}) / 2" | bc )
+
         if [[ $(echo "${yield} > 0" | bc -l) -eq 1 && $(echo "${q30} >= 0.85" | bc -l) -eq 1 ]]
         then
             qc_pass="true"
@@ -100,8 +105,9 @@ do
     sample_yld_req=$(echo "${sample_api}" | jq -r '.[].yld_req')
     sample_q30_req=$(echo "${sample_api}" | jq -r '.[].q30_req')
 
-    sample_yld=$(echo "${metrics_data}" | grep ${sample_barcode}| awk 'BEGIN {FS=OFS=","} ; {sum+=$6} END {printf "%.0f", sum}')
-    sample_q30=$(echo "${metrics_data}" | grep ${sample_barcode} | awk 'BEGIN {FS=OFS=","} ; {sum+=$10; ++n} END {print sum/n *100}')
+    fastq_api=$(hmf_api_get "fastq?sample_id=${sample_id}")
+    sample_yld=$(echo "${fastq_api}" | jq -r '.[] | select(.qc_pass==true) | .yld' | awk '{sum+=$0} END {printf "%.0f", sum}')
+    sample_q30=$(echo "${fastq_api}" | jq -r '.[] | select(.qc_pass==true) | .yld' | awk '{sum+=$0; ++n} END {print sum/n}')
     if [[ $(echo "${sample_yld} >= ${sample_yld_req}" | bc -l) -eq 1 && $(echo "${sample_q30} >= ${sample_q30_req}" | bc -l) -eq 1 ]]
     then
         sample_status="Ready"
