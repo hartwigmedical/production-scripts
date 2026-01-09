@@ -64,8 +64,8 @@ do
         fi
 
         bucket_path="${FASTQ_BUCKET}/novaseq/${sequencing_run}/fastq"
-        filename_r1=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_${flowcell}_*_L00${lane}_R1_001.fastq.gz" | cut -d/ -f7)
-        filename_r2=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_${flowcell}_*_L00${lane}_R2_001.fastq.gz" | cut -d/ -f7)
+        filename_r1=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R1_001.fastq.gz" | cut -d/ -f7)
+        filename_r2=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R2_001.fastq.gz" | cut -d/ -f7)
 
         fastq_object_id=$(hmf_api_get "fastq?name_r1=${filename_r1}" | jq -r '.[].id')
 
