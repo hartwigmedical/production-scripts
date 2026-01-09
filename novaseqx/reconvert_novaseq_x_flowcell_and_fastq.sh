@@ -64,8 +64,8 @@ do
         fi
 
         bucket_path="${FASTQ_BUCKET}/novaseq/${sequencing_run}/fastq"
-        filename_r1=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R1_001.fastq.gz" | cut -d/ -f7)
-        filename_r2=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R2_001.fastq.gz" | cut -d/ -f7)
+        filename_r1=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_${flowcell_id}_*_L00${lane}_R1_001.fastq.gz" | cut -d/ -f7)
+        filename_r2=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_${flowcell_id}_*_L00${lane}_R2_001.fastq.gz" | cut -d/ -f7)
 
         fastq_object_id=$(hmf_api_get "fastq?name_r1=${filename_r1}" | jq -r '.[].id')
 
@@ -84,8 +84,8 @@ do
     sample_q30_req=$(echo "${sample_api}" | jq -r '.[].q30_req')
 
     fastq_api=$(hmf_api_get "fastq?sample_id=${sample_id}")
-    sample_yld=$(echo "${fastq_api}" | jq -r '.[] | select(.qc_pass==true) | select(.bucket!= null) | .yld' | awk '{sum+=$0} END {printf "%.0f", sum}')
-    sample_q30=$(echo "${fastq_api}" | jq -r '.[] | select(.qc_pass==true) | select(.bucket!= null) | .q30' | awk '{sum+=$0; ++n} END {print sum/n * 100}')
+    sample_yld=$(echo "${fastq_api}" | jq -r '.[] | select(.qc_pass==true) | select(.bucket!=null) | .yld' | awk '{sum+=$0} END {printf "%.0f", sum}')
+    sample_q30=$(echo "${fastq_api}" | jq -r '.[] | select(.qc_pass==true) | select(.bucket!=null) | .q30' | awk '{sum+=$0; ++n} END {print sum/n * 100}')
     if [[ $(echo "${sample_yld} >= ${sample_yld_req}" | bc -l) -eq 1 && $(echo "${sample_q30} >= ${sample_q30_req}" | bc -l) -eq 1 ]]
     then
         sample_status="Ready"
