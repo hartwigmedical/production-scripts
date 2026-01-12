@@ -61,6 +61,6 @@ timed_echo "Monitoring $DIR_TO_WATCH for new $ANALYSIS_COMPLETE_FILE files (poll
 echo
 
 while true; do
-    sleep "$POLL_INTERVAL"
     check_for_new_files
+    sleep "$POLL_INTERVAL"
 done
