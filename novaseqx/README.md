@@ -11,11 +11,15 @@ It uses `upload_finished_analysis_files.sh` to upload the files.
     - FASTQ
     - BCL
     - CBCL
-    - Quality metrics, SampleSheet, RunInfo, RunParameters
+    - Quality metrics, SampleSheet, RunInfo, RunParameters, etc.
 
 - **Upload Process**: Files are uploaded to GCP buckets organized by type
     - Each file type is stored in its dedicated folder
     - Upload functionality is handled by the script located in the `upload-server` directory of the `portal-api` repository
+
+**Tracking uploaded files**
+Uploaded files are being tracked in a log file. Every time a file is found, it is checked against this file.
+The logfile '.processed_analysis_files.log' is created in the same directory as the scripts are located in.
 
 The script `upload-server/scripts/upload-file.sh` is used for this purpose.
 This script should be in the same directory as the `upload_finished_analysis_files.sh` script and executable as this communicates with the upload-server.
@@ -51,9 +55,6 @@ Make sure to follow the readme in the portal-api repository to setup authenticat
     - `AUTH_TOKEN`, token generated from the portal-api authentication service
   
 - **Required packages**:
-    - `inotify-tools`, used to monitor the file system for new files in the given base directory
-      - Oracle Linux 8: `sudo dnf install inotify-tools` and test if installed `inotifywait --version`<br>
-        In case EPEL is not enabled yet: `sudo dnf install oracle-epel-release-el8`
     - `parallel`, used to upload multiple files in parallel
       - Oracle Linux 8: `sudo dnf install parallel` and test if installed `parallel --version`
       - The first time used the package logs a lot about citations, to silence this, follow the instructions it prints the first time.

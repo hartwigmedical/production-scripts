@@ -63,7 +63,7 @@ upload_files() {
     printf "%s\n" "${files[@]}" | parallel -j $MAX_PARALLEL_UPLOADS -C ':' './upload-file.sh' {1} "$uri_base"/{2}
     wait
 
-    log "Done uploading the $pattern files"
+    timed_echo "Done uploading the $pattern files"
 }
 
 upload_files ".fastq.gz" "fastq"
