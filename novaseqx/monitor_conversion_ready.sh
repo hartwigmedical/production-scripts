@@ -13,16 +13,21 @@ if [ -z "$DIR_TO_WATCH" ]; then
   exit 1
 fi
 
-# Kill any existing inotifywait processes watching the same directory
-for pid in $(pgrep -x inotifywait); do
-    if grep -q "$DIR_TO_WATCH" /proc/$pid/cmdline 2>/dev/null; then
-        timed_echo "Killing existing inotifywait process (PID: $pid) watching $DIR_TO_WATCH..."
-        kill -9 $pid
-        sleep 1
-    fi
-done
-
 ANALYSIS_COMPLETE_FILE="Secondary_Analysis_Complete.txt"
+POLL_INTERVAL=900
+PROCESSED_FILES_LOG="$SCRIPT_DIR/.processed_analysis_files.log"
+
+touch "$PROCESSED_FILES_LOG"
+
+is_already_processed() {
+    local file_path="$1"
+    grep -Fxq "$file_path" "$PROCESSED_FILES_LOG"
+}
+
+mark_as_processed() {
+    local file_path="$1"
+    echo "$file_path" >> "$PROCESSED_FILES_LOG"
+}
 
 process_folder() {
     local flowcell_folder="$1"
@@ -37,13 +42,25 @@ process_folder() {
     "./upload_finished_analysis_files.sh" "$data_dir" "$flowcell_name"
 }
 
+check_for_new_files() {
+    timed_echo "Checking for new $ANALYSIS_COMPLETE_FILE files..."
+
+    found_files=$(find "$DIR_TO_WATCH" -name "$ANALYSIS_COMPLETE_FILE" 2>/dev/null)
+
+    for file_path in $found_files; do
+        if ! is_already_processed "$file_path"; then
+            timed_echo "Found new file: $file_path"
+            process_folder "$file_path"
+            mark_as_processed "$file_path"
+        fi
+    done
+}
+
 echo
-timed_echo "Monitoring $DIR_TO_WATCH for new $ANALYSIS_COMPLETE_FILE files"
+timed_echo "Monitoring $DIR_TO_WATCH for new $ANALYSIS_COMPLETE_FILE files (polling every $POLL_INTERVAL seconds)"
 echo
-inotifywait -m -r -e close_write --format '%w%f' "$DIR_TO_WATCH" | while read -r full_path; do
-    if [[ "$full_path" == *"$ANALYSIS_COMPLETE_FILE" ]]; then
-        process_folder "$full_path"
-    else
-        timed_echo "Ignoring: $full_path"
-    fi
+
+while true; do
+    sleep "$POLL_INTERVAL"
+    check_for_new_files
 done
