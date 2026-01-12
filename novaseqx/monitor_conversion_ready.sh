@@ -14,7 +14,7 @@ if [ -z "$DIR_TO_WATCH" ]; then
 fi
 
 ANALYSIS_COMPLETE_FILE="Secondary_Analysis_Complete.txt"
-POLL_INTERVAL=900
+POLL_INTERVAL=10
 PROCESSED_FILES_LOG="$SCRIPT_DIR/.processed_analysis_files.log"
 
 touch "$PROCESSED_FILES_LOG"
