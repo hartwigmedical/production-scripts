@@ -2,7 +2,6 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common_utils.sh"
-echo $SCRIPT_DIR
 
 DIR_TO_WATCH="$1"
 DIR_TO_WATCH="${DIR_TO_WATCH%/}"
