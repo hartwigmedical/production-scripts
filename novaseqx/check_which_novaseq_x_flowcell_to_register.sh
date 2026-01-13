@@ -22,6 +22,6 @@ for folder in ${new_folders}; do
 done
 
 info "Copying ${TMP_PROCESSED} to ${GCP_PROCESSED}"
-gsutil cp ${TMP_PROCESSED} ${GCP_PROCESSED}}
+gsutil cp ${TMP_PROCESSED} ${GCP_PROCESSED}
 info "Remove tmp files"
 rm ${TMP_PROCESSED} ${TMP_ALL}
