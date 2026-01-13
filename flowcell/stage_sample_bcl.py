@@ -91,12 +91,14 @@ def process_input(sample_input: SampleInput) -> Union[Sample, SampleParseError]:
 
         sample_status, run_status, ini = m.group(5).split("|")
 
-        if re.search(r"T\d*$", sample_input.sample_name):
-            sample_type = 'TUMOR'
-        elif re.search(r"R\d*$", sample_input.sample_name):
+        # Figure out if the sample is a tumor or ref
+        # In NovaSeq X runs, the reporting_id ends with '-ref'
+        # in NovaSeq 6000 runs, the sample name ends with 'R\d'
+        # hacky hack
+        if sample_input.reporting_id.endswith('-ref') or re.search(r"R\d*$", sample_input.sample_name):
             sample_type = 'REF'
         else:
-            sample_type = 'OTHER'
+            sample_type = 'TUMOR'
 
         return Sample(
             submission=sample_input.submission,
