@@ -8,7 +8,7 @@ export SERVER_URL="https://upload.test.hartwigmedicalfoundation.nl"
 export AUTH_TOKEN="enter-your-token"
 
 MAX_PARALLEL_UPLOADS=6
-OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "RunInfo.xml" "Demultiplex_Stats.csv" "Top_Unknown_Barcodes.csv")
+OTHER_FILES=("Quality_Metrics.csv" "SampleSheet.csv" "Demultiplex_Stats.csv" "Top_Unknown_Barcodes.csv")
 FLOWCELL_DATA_DIRECTORY="$1"
 FLOWCELL_DATA_DIRECTORY="${FLOWCELL_DATA_DIRECTORY%/}"
 FLOWCELL_ID="$2"
@@ -71,6 +71,16 @@ upload_files ".fastq.gz" "fastq"
 for file in "${OTHER_FILES[@]}"; do
     upload_files "$file" "other"
 done
+
+# RunInfo file is in higher folder
+echo
+timed_echo "----------RunInfo.xml------------"
+run_info_file=$(echo ${FLOWCELL_DATA_DIRECTORY} | cut -d / -f1-7)
+run_info_file=$(echo "${run_info_file}/RunInfo.xml")
+uri="novaseq/${FLOWCELL_ID}/other/RunInfo.xml"
+timed_echo "Starting to upload RunInfo.xml file to ${uri}"
+./upload-file.sh ${run_info_file} ${uri}
+timed_echo "Done uploading the RunInfo.xml file"
 
 # RunParameters file is in different folder
 echo
