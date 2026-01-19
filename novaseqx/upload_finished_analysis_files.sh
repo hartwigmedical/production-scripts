@@ -28,30 +28,16 @@ fi
 
 timed_echo "Doing a maximum of ${MAX_PARALLEL_UPLOADS} parallel uploads using server: ${SERVER_URL}"
 
-get_sub_path() {
-    local file=$1
-    local folder_depth=$2
-    if [ -n "$folder_depth" ]; then
-        local rel_path=${file#"$FLOWCELL_DATA_DIRECTORY"/}
-        echo "$(echo "$rel_path" | rev | cut -d'/' -f1-$((folder_depth+1)) | rev)"
-    else
-        echo "$(basename "$file")"
-    fi
-}
-
 upload_files() {
     local pattern="*$1"   # The pattern of the files it should match
     local folder=$2       # The base folder in the cloud bucket
-    # Keeps the structure of the folders counting from the end
-    # e.g. runfolder/f1/f2/file.txt with depth 1 would keep f2/file.txt
-    local folder_depth=$3
     echo
     timed_echo "----------$pattern------------"
     local uri_base="novaseq/$FLOWCELL_ID/$folder"
 
     files=()
     while IFS= read -r file; do
-        files+=("$file:$(get_sub_path "$file" "$folder_depth")")
+        files+=("$file:$(basename "$file")")
     done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
 
     if [ ${#files[@]} -eq 0 ]; then
