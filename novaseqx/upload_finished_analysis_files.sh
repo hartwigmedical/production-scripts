@@ -77,9 +77,9 @@ echo
 timed_echo "----------RunInfo.xml------------"
 run_info_file=$(echo ${FLOWCELL_DATA_DIRECTORY} | cut -d / -f1-7)
 run_info_file=$(echo "${run_info_file}/RunInfo.xml")
-uri="novaseq/${FLOWCELL_ID}/other/RunInfo.xml"
-timed_echo "Starting to upload RunInfo.xml file to ${uri}"
-./upload-file.sh ${run_info_file} ${uri}
+run_info_uri="novaseq/${FLOWCELL_ID}/other/RunInfo.xml"
+timed_echo "Starting to upload RunInfo.xml file to ${run_info_uri}"
+./upload-file.sh ${run_info_file} ${run_info_uri}
 timed_echo "Done uploading the RunInfo.xml file"
 
 # RunParameters file is in different folder
@@ -87,7 +87,7 @@ echo
 timed_echo "----------RunParameters.xml------------"
 run_parameters_file=$(echo ${FLOWCELL_DATA_DIRECTORY} | cut -d / -f1-4,6-7)
 run_parameters_file=$(echo "${run_parameters_file}/RunParameters.xml")
-uri="novaseq/${FLOWCELL_ID}/other/RunParameters.xml"
-timed_echo "Starting to upload RunParameters.xml file to ${uri}"
-./upload-file.sh ${run_parameters_file} ${uri}
+run_parameters_uri="novaseq/${FLOWCELL_ID}/other/RunParameters.xml"
+timed_echo "Starting to upload RunParameters.xml file to ${run_parameters_uri}"
+./upload-file.sh ${run_parameters_file} ${run_parameters_uri}
 timed_echo "Done uploading the RunParameters.xml file"
