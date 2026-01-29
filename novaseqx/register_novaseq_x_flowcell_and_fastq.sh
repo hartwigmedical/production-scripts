@@ -32,14 +32,25 @@ name=$(gsutil cat ${samplesheet_file} | grep RunName | cut -d, -f2)
 metrics_file="gs://${FASTQ_BUCKET}/novaseq/${sequencing_run}/other/Quality_Metrics.csv"
 metrics_data=$(gsutil cat ${metrics_file} | tail -n +2)
 
+seq_platform_data=$(hmf_api_get "platforms/7") # Novaseq X id = 7.
+flowcell_undet_req=$(echo "${seq_platform_data}" | jq -r '.[].undetermined_reads_perc_cutoff')
+flowcell_q30_req=$(echo "${seq_platform_data}" | jq -r '.[].q30_cutoff')
+
 yield_total=$(echo "${metrics_data}" | awk 'BEGIN {FS=OFS=","} ; {sum+=$6} END {printf "%.0f", sum}')
 yield_undetermined=$(echo "${metrics_data}" | grep "Undetermined" | awk 'BEGIN {FS=OFS=","} ; {sum+=$6} END {printf "%.0f",sum}')
 percenatage_undetermined=$(echo "${yield_undetermined}/${yield_total}*10000" | bc -l | cut -d. -f1)
 q30_average=$(echo "${metrics_data}" | awk 'BEGIN {FS=OFS=","} ; {sum+=$10; ++n} END {print sum/n *100}')
 
+if [[ $(echo "${percenatage_undetermined} <= ${flowcell_undet_req}" | bc -l) -eq 1 && $(echo "${q30_average} >= ${flowcell_q30_req}" | bc -l) -eq 1 ]]
+then
+    flowcell_status="true"
+else
+    flowcell_status="false"
+fi
+
 flowcell_data=$(
-  printf '{"name": "%s", "index": "%s", "flowcell_id": "%s", "status": "Converted", "sequencer_id": 18, "q30": %s, "yld": %s, "undet_rds": %s, "undet_rds_p": %s, "undet_rds_p_pass": "true", "bucket": "null", "convertTime": "%s", "sequencer": "%s"}' \
-         "${name}" "${run}" "${flowcell}" "${q30_average}" "${yield_total}" "${yield_undetermined}" "${percenatage_undetermined}" "${current_datetime}" "${sequencer}"
+  printf '{"name": "%s", "index": "%s", "flowcell_id": "%s", "status": "Converted", "sequencer_id": 18, "q30": %s, "yld": %s, "undet_rds": %s, "undet_rds_p": %s, "undet_rds_p_pass": "%s", "bucket": "null", "convertTime": "%s", "sequencer": "%s"}' \
+         "${name}" "${run}" "${flowcell}" "${q30_average}" "${yield_total}" "${yield_undetermined}" "${percenatage_undetermined}" "${flowcell_status}" "${current_datetime}" "${sequencer}"
 )
 curl --silent --show-error -H "Content-Type: application/json" -H "Accept: application/json" -X POST "${API_URL}/flowcells" --data "${flowcell_data}" || die "cURL POST of Flowcell failed"
 info "Posted flowcell ${name} API"
