@@ -105,6 +105,11 @@ do
         sample_status="Insufficient Quality"
     fi
 
+    if [[ flowcell_status == "false"]]
+    then
+        sample_status="Insufficient Quality"
+    fi
+
     hmf_api_patch -c "samples" -o "${sample_id}" -f "yld" -v "${sample_yld}" -e
     hmf_api_patch -c "samples" -o "${sample_id}" -f "q30" -v "${sample_q30}" -e
     hmf_api_patch -c "samples" -o "${sample_id}" -f "status" -v "${sample_status}" -e
