@@ -105,7 +105,7 @@ do
         sample_status="Insufficient Quality"
     fi
 
-    if [[ flowcell_status == "false"]]
+    if [[ ${flowcell_status} == "false" ]]
     then
         sample_status="Insufficient Quality"
     fi
