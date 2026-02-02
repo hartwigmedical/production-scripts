@@ -29,15 +29,15 @@ metrics_file="gs://${FASTQ_BUCKET}/novaseq/${sequencing_run}/other/Quality_Metri
 metrics_data=$(gsutil cat ${metrics_file} | tail -n +2)
 
 seq_platform_data=$(hmf_api_get "platforms/7") # Novaseq X id = 7.
-flowcell_undet_req=$(echo "${seq_platform_data}" | jq -r '.undetermined_reads_perc_cutoff')
+flowcell_undet_req=$(echo "${seq_platform_data}" | jq -r '.undetermined_reads_perc_cutoff * 100') # For correct formatting
 flowcell_q30_req=$(echo "${seq_platform_data}" | jq -r '.q30_cutoff')
 
 yield_total=$(echo "${metrics_data}" | awk 'BEGIN {FS=OFS=","} ; {sum+=$6} END {printf "%.0f", sum}')
 yield_undetermined=$(echo "${metrics_data}" | grep "Undetermined" | awk 'BEGIN {FS=OFS=","} ; {sum+=$6} END {printf "%.0f",sum}')
-percenatage_undetermined=$(echo "${yield_undetermined}/${yield_total}*10000" | bc -l | cut -d. -f1)
+percentage_undetermined=$(echo "${yield_undetermined}/${yield_total}*10000" | bc -l | cut -d. -f1)
 q30_average=$(echo "${metrics_data}" | awk 'BEGIN {FS=OFS=","} ; {sum+=$10; ++n} END {print sum/n *100}')
 
-if [[ $(echo "${percenatage_undetermined} <= ${flowcell_undet_req}" | bc -l) -eq 1 && $(echo "${q30_average} >= ${flowcell_q30_req}" | bc -l) -eq 1 ]]
+if [[ $(echo "${percentage_undetermined} <= ${flowcell_undet_req}" | bc -l) -eq 1 && $(echo "${q30_average} >= ${flowcell_q30_req}" | bc -l) -eq 1 ]]
 then
     flowcell_status="true"
 else
@@ -48,7 +48,7 @@ flowcell_object_id=$(hmf_api_get "flowcells?flowcell_id=${flowcell}" |jq -r '.[]
 hmf_api_patch -c flowcells -o ${flowcell_object_id} -f yld -v ${yield_total} -e
 hmf_api_patch -c flowcells -o ${flowcell_object_id} -f q30 -v ${q30_average} -e
 hmf_api_patch -c flowcells -o ${flowcell_object_id} -f undet_rds -v ${yield_undetermined} -e
-hmf_api_patch -c flowcells -o ${flowcell_object_id} -f undet_rds_p -v ${percenatage_undetermined} -e
+hmf_api_patch -c flowcells -o ${flowcell_object_id} -f undet_rds_p -v ${percentage_undetermined} -e
 hmf_api_patch -c flowcells -o ${flowcell_object_id} -f undet_rds_p_pass -v ${flowcell_status} -e
 
 # Patch Fastq
