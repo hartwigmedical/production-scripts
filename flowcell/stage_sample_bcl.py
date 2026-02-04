@@ -30,6 +30,7 @@ class SampleParseError:
 
 @dataclass
 class Sample:
+    flowcell_name: str
     submission: str
     isolation_barcode: str
     sample_name: str
@@ -101,6 +102,7 @@ def process_input(sample_input: SampleInput) -> Union[Sample, SampleParseError]:
             sample_type = 'TUMOR'
 
         return Sample(
+            flowcell_name=sample_input.flowcell_name,
             submission=sample_input.submission,
             isolation_barcode=sample_input.isolation_barcode,
             sample_name=sample_input.sample_name,
@@ -132,7 +134,7 @@ def print_output_for_excel(samples: List[Sample]):
     by_seq = []
     for s in samples:
         if s.by_seq_in_gb() > 0:
-            result = compute_result(
+            result = compute_by_seq_result(
                 s,
                 f'Extra Seq {s.by_seq_in_gb()} GBase',
                 'AB'
@@ -195,6 +197,19 @@ def compute_result(s: Sample, output_status: str, team: str):
         '',
         '',
         '',
+        s.set_name
+    )
+
+def compute_by_seq_result(s: Sample, output_status: str, team: str):
+    return (
+        s.flowcell_name,
+        s.submission,
+        s.isolation_barcode,
+        s.sample_name,
+        s.reporting_id,
+        s.output_type,
+        output_status,
+        team,
         s.set_name
     )
 
