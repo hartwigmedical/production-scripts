@@ -31,5 +31,17 @@ info "Copy FASTQs"
 for barcode in ${sample_barcodes}; do
     destination_url="gs://hmf-crunch-innovation/fastq/HMFregINN-${folder_postfix}/${submission_id}/${barcode}/"
     info "Moving sample ${barcode} from gs://fastq-input-prod-1/ to ${destination_url}"
-    gsutil -m cp "gs://fastq-input-prod-1/${barcode}_*fastq.gz" "${destination_url}"
+    sample_id=$(hmf_api_get "samples?barcode=${barcode}" | jq -r '.[] | .id')
+    fastq_info=$(hmf_api_get "fastq?sample_id=${sample_id}")
+    buckets=$(echo ${fastq_info} | jq -r '.[] | .bucket')
+    names_r1=$(echo ${fastq_info} | jq -r '.[] | .name_r1')
+    names_r2=$(echo ${fastq_info} | jq -r '.[] | .name_r2')
+    for index in $(seq 1 $(echo "${buckets}" | wc -w));
+    do
+        bucket=$(echo "${buckets}" | cut -d " " -f ${index})
+        name_r1=$(echo "${names_r1}" | cut -d " " -f ${index})
+        name_r2=$(echo "${names_r2}" | cut -d " " -f ${index})
+        gsutil -m cp "gs://${bucket}}/${name_r1}" "${destination_url}"
+        gsutil -m cp "gs://${bucket}}/${name_r2}" "${destination_url}"
+    done
 done
