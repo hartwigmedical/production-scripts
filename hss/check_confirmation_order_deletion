@@ -11,7 +11,7 @@ for confirmation_order in ${confirmation_orders}; do
     then
         date_diff="NULL"
     else
-        date_diff=$((($(date -d ${current_date} +%s) - $(date -d ${completion_date} +%s)) / 86400))
+        date_diff=$((($(date -d ${current_date} +%s) - $(date -d ${completion_date} +%s)) / 86400)) # Divide by 86400 to go from seconds to days
     fi
 
     if [[ ${date_diff} -gt 90 ]]; # Assumed to have retention time of 90 days.
