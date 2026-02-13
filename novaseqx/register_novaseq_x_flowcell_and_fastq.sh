@@ -85,9 +85,9 @@ do
         q30_r2=$(echo "${second_line}" | cut -d, -f10)
 
         yield=$(echo "${yield_r1} + ${yield_r2}" | bc )
-        q30=$(echo "scale=2; (${q30_r1} + ${q30_r2}) / 2" | bc | sed 's/^\./0./' -)
+        q30=$(echo "scale=2; (${q30_r1} + ${q30_r2}) / 2 * 100" | bc | cut -d . -f 1)
 
-        if [[ $(echo "${yield} > 0" | bc -l) -eq 1 && $(echo "${q30} >= 0.85" | bc -l) -eq 1 ]]
+        if [[ $(echo "${yield} > 0" | bc -l) -eq 1 && $(echo "${q30} >= 85" | bc -l) -eq 1 ]]
         then
             qc_pass="true"
         else
