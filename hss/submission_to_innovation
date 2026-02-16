@@ -41,7 +41,7 @@ for barcode in ${sample_barcodes}; do
         bucket=$(echo "${buckets}" | cut -d " " -f ${index})
         name_r1=$(echo "${names_r1}" | cut -d " " -f ${index})
         name_r2=$(echo "${names_r2}" | cut -d " " -f ${index})
-        gsutil -m cp "gs://${bucket}}/${name_r1}" "${destination_url}"
-        gsutil -m cp "gs://${bucket}}/${name_r2}" "${destination_url}"
+        gsutil -m cp "gs://${bucket}/${name_r1}" "${destination_url}"
+        gsutil -m cp "gs://${bucket}/${name_r2}" "${destination_url}"
     done
 done
