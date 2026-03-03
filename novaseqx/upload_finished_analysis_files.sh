@@ -35,9 +35,11 @@ upload_files() {
     timed_echo "----------$pattern------------"
     local uri_base="novaseq/$FLOWCELL_ID/$folder"
 
+    flowcell=$(echo ${FLOWCELL_ID} | cut -d_ -f4 | sed 's/^.\{1\}//')
     files=()
     while IFS= read -r file; do
-        files+=("$file:$(basename "$file")")
+        dest_name=$(echo "$(basename ${file} | cut -d_ -f1)_${flowcell}_$(basename ${file} | cut -d_ -f2-)")
+        files+=("$file:$dest_name")
     done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
 
     if [ ${#files[@]} -eq 0 ]; then

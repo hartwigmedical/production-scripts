@@ -66,9 +66,9 @@ do
         q30_r2=$(echo "${second_line}" | cut -d, -f10)
 
         yield=$(echo "${yield_r1} + ${yield_r2}" | bc )
-        q30=$(echo "scale=2; (${q30_r1} + ${q30_r2}) / 2" | bc | sed 's/^\./0./' -)
+        q30=$(echo "scale=2; (${q30_r1} + ${q30_r2}) / 2 * 100" | bc | cut -d . -f 1)
 
-        if [[ $(echo "${yield} > 0" | bc -l) -eq 1 && $(echo "${q30} >= 0.85" | bc -l) -eq 1 ]]
+        if [[ $(echo "${yield} > 0" | bc -l) -eq 1 && $(echo "${q30} >= 85" | bc -l) -eq 1 ]]
         then
             qc_pass="true"
         else
@@ -97,7 +97,7 @@ do
 
     fastq_api=$(hmf_api_get "fastq?sample_id=${sample_id}")
     sample_yld=$(echo "${fastq_api}" | jq -r '.[] | select(.qc_pass==true) | select(.bucket!=null) | .yld' | awk '{sum+=$0} END {printf "%.0f", sum}')
-    sample_q30=$(echo "${fastq_api}" | jq -r '.[] | select(.qc_pass==true) | select(.bucket!=null) | .q30' | awk '{sum+=$0; ++n} END {print sum/n * 100}')
+    sample_q30=$(echo "${fastq_api}" | jq -r '.[] | select(.qc_pass==true) | select(.bucket!=null) | .q30' | awk '{sum+=$0; ++n} END {print sum/n}')
     if [[ $(echo "${sample_yld} >= ${sample_yld_req}" | bc -l) -eq 1 && $(echo "${sample_q30} >= ${sample_q30_req}" | bc -l) -eq 1 ]]
     then
         sample_status="Ready"
