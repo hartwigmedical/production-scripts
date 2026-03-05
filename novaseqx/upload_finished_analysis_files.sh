@@ -38,7 +38,11 @@ upload_files() {
     flowcell=$(echo ${FLOWCELL_ID} | cut -d_ -f4 | sed 's/^.\{1\}//')
     files=()
     while IFS= read -r file; do
-        dest_name=$(echo "$(basename ${file} | cut -d_ -f1)_${flowcell}_$(basename ${file} | cut -d_ -f2-)")
+        if [[ ${folder} == "fastq" ]]; then
+          dest_name=$(echo "$(basename ${file} | cut -d_ -f1)_${flowcell}_$(basename ${file} | cut -d_ -f2-)")
+        else
+          dest_name=$(basename ${file})
+        fi
         files+=("$file:$dest_name")
     done < <(find "$FLOWCELL_DATA_DIRECTORY" -type f -name "$pattern")
 
