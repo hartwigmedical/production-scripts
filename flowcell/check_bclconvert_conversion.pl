@@ -37,7 +37,7 @@ my $HISEQ = "HiSeq";
 
 # The official QC settings are in the platforms endpoint of HMFAPI (the copy here is for convenience)
 my %SETTINGS_PER_PLATFORM = (
-    $NOVASEQX => {'min_flowcell_q30' => 85, 'min_sample_yield' => 1e9, 'max_undetermined' =>  8, 'yield_factor' => 1e6},
+    $NOVASEQX => {'min_flowcell_q30' => 85, 'min_sample_yield' => 1e9, 'max_undetermined' =>  10, 'yield_factor' => 1e6},
     $NOVASEQ => {'min_flowcell_q30' => 85, 'min_sample_yield' => 1e9, 'max_undetermined' =>  8, 'yield_factor' => 1e6},
     $NEXTSEQ => {'min_flowcell_q30' => 75, 'min_sample_yield' => 1e9, 'max_undetermined' => 50, 'yield_factor' => 1e6},
     $ISEQ    => {'min_flowcell_q30' => 75, 'min_sample_yield' => 5e6, 'max_undetermined' => 50, 'yield_factor' => 1},
