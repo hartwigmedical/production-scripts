@@ -29,7 +29,7 @@ metrics_file="gs://${FASTQ_BUCKET}/novaseq/${sequencing_run}/other/Quality_Metri
 metrics_data=$(gsutil cat ${metrics_file} | tail -n +2)
 
 seq_platform_data=$(hmf_api_get "platforms/7") # Novaseq X id = 7.
-flowcell_undet_req=$(echo "${seq_platform_data}" | jq -r '.undetermined_reads_perc_cutoff')
+flowcell_undet_req=$(echo "${seq_platform_data}" | jq -r '.undetermined_reads_perc_cutoff* 100') # For correct formatting
 flowcell_q30_req=$(echo "${seq_platform_data}" | jq -r '.q30_cutoff')
 
 yield_total=$(echo "${metrics_data}" | awk 'BEGIN {FS=OFS=","} ; {sum+=$6} END {printf "%.0f", sum}')
