@@ -13,5 +13,5 @@ do
     project_category=$(echo "${order_info}" | jq -r '.projectCategory')
     count=$(echo "${order_info}" | jq '.servicesSamples | length')
     output=$(echo "${order_info}" | jq -r '.servicesSamples | .[0].dataOutputLevel')
-    echo -e "NA\t${confirmation_number}\t${project_category}\t${RETENTION_DAYS}\tNA\t${output}\t${count}"
+    echo -e "${confirmation_number}\t${confirmation_number}\t${project_category}\t${RETENTION_DAYS}\tNA\t${output}\t${count}"
 done
