@@ -15,7 +15,7 @@ gsutil cp ${GCP_PROCESSED} ${TMP_PROCESSED}
 info "Determining new folders"
 new_folders=$(awk 'NR == FNR {seen[$1]; next} !($0 in seen)' ${TMP_PROCESSED} ${TMP_ALL})
 for folder in ${new_folders}; do
-    runinfo_file="gs://${GCP_ALL}/novaseq/${folder}/other/RunInfo.xml"
+    runinfo_file="${GCP_ALL}/novaseq/${folder}/other/RunInfo.xml"
     if [[ $(gsutil -q stat ${runinfo_file} || echo 1) == 1 ]] ; then
         info "Not all files have been copied for flowcell. Try again later."
     else
