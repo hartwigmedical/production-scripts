@@ -58,12 +58,21 @@ fi
 # Standard
 # info "Fetching data for ${barcode}"
 ask_request_body=$(echo -e "{\"isolationBarcode\": \"${barcode}\"}")
-register_json=$(curl -s -X 'POST' 'http://lama.prod-1/api/registration/hartwig-api/show' \
+lama_response=$(curl -s -w "\n%{http_code}" -X 'POST' 'http://lama.prod-1/api/registration/hartwig-api/show' \
                   -H 'accept: */*' \
                   -H 'Content-Type: application/json' \
                   -d "${ask_request_body}") || die "Could not fetch registration json for ${barcode}"
-setname=$(echo "${register_json}" | jq -r '.set_name')
+register_json=$(echo "${lama_response}" | head -n 1)
+status_code=$(echo "${lama_response}" | tail -n 1)
 
+if [[ "${status_code}" == "200" ]]; then
+    setname=$(echo "${register_json}" | jq -r '.set_name')
+elif [[ "${status_code}" == "500" ]]; then
+    setname="null"
+else
+    message=$(echo "${register_json}" | jq -r '.message')
+    die "${status_code} ${message}"
+fi
 
 # API checks
 # info "Check Hartwig API samples on ${barcode}"
@@ -97,7 +106,6 @@ elif [[ ${ini} == "Somatic.ini" && ${submission} =~ ^Diagnostic* && ${tum_report
      ini_override="ShallowSeq.ini"
      warn "Sample from VHIO (${barcode}) detected with Somatic output, but no runs. Changed to ShallowSeq output"
 fi
-
 
 # Write request body
 request_body="\"isolationBarcode\": \"${barcode}\""
