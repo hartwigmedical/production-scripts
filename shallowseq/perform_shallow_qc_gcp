@@ -176,6 +176,15 @@ print_shallow_qc_for_run() {
    purity=$(echo "${purity} * 100" | bc )
    data_string=$(printf '{"tumorIsolationBarcode": "%s", "referenceIsolationBarcode": "%s", "purpleStatus": ["%s"], "purpleFitMethod": "%s", "amberStatus": "%s", "tumorCellPurity": %s, "shallowSequencingStatus": "%s"}' ${tum_isolation_barcode} ${ref_isolation_barcode} ${qc_stat} ${status} ${amb_qc} ${purity} ${to_seq})
    curl -H "Content-Type: application/json" -H "Accept: */*" -X POST http://lama.prod-1/api/sequencing/shallow-result -d "${data_string}"
+
+   if [[ "${to_seq}" == "FAIL" ]]; then
+     info "FAIL ${tum_isolation_barcode}, thus copying circos to NextCloud for KMBP check"
+     circos_plot="${pur_dir}/plot/*circos.png"
+     tmp_circos_plot="/tmp/${tum_isolation_barcode}_circos.png"
+     gsutil cp "${circos_plot}" "${tmp_circos_plot}"
+     do_upload_files_to_nextcloud_directory UPLOAD_SHALLOW "${tmp_circos_plot}"
+     rm "${tmp_circos_plot}"
+   fi
 }
 
 get_yield() {
