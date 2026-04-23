@@ -38,15 +38,17 @@ sudo systemctl start monitor_conversion.service
 <H3>Uploading Manually</H3>
 Running the `upload_finished_analysis_files.sh` is also possible by calling:
 ```bash
-upload_finished_analysis_files.sh /base/folder/runname runname
+upload_finished_analysis_files.sh /usr/local/illumina/runs/<flowcell_id> <flowcell_id>
 ```
 It will create file(s) in the output bucket in the format of:
-- gs://output-bucket/novaseq/runname/fastq/file.fastq.gz
-- gs://output-bucket/novaseq/runname/cbcl/L00X/CX.X/file.cbcl
-- gs://output-bucket/novaseq/runname/other/Quality_Metrics.csv
-- gs://output-bucket/novaseq/runname/other/SampleSheet.csv
-- gs://output-bucket/novaseq/runname/other/RunInfo.xml
-- gs://output-bucket/novaseq/runname/other/RunParameters.xml
+- gs://output-bucket/novaseq/<flowcell_id>/fastq/file.fastq.gz
+- gs://output-bucket/novaseq/<flowcell_id>/cbcl/L00X/CX.X/file.cbcl
+- gs://output-bucket/novaseq/<flowcell_id>/other/Quality_Metrics.csv
+- gs://output-bucket/novaseq/<flowcell_id>/other/SampleSheet.csv
+- gs://output-bucket/novaseq/<flowcell_id>/other/RunInfo.xml
+- gs://output-bucket/novaseq/<flowcell_id>/other/RunParameters.xml
+- gs://output-bucket/novaseq/<flowcell_id>/other/Demultiplex_Stats.csv
+- gs://output-bucket/novaseq/<flowcell_id>/other/Top_Unknown_Barcodes.csv
 
 <H3>Requirements</H3>
 Make sure to follow the readme in the portal-api repository to setup authentication and server url `upload-server/scripts/README.md`.
