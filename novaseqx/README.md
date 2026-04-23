@@ -42,7 +42,6 @@ upload_finished_analysis_files.sh /usr/local/illumina/runs/<flowcell_id> <flowce
 ```
 It will create file(s) in the output bucket in the format of:
 - gs://output-bucket/novaseq/<flowcell_id>/fastq/file.fastq.gz
-- gs://output-bucket/novaseq/<flowcell_id>/cbcl/L00X/CX.X/file.cbcl
 - gs://output-bucket/novaseq/<flowcell_id>/other/Quality_Metrics.csv
 - gs://output-bucket/novaseq/<flowcell_id>/other/SampleSheet.csv
 - gs://output-bucket/novaseq/<flowcell_id>/other/RunInfo.xml
