@@ -65,15 +65,6 @@ lama_response=$(curl -s -w "\n%{http_code}" -X 'POST' 'http://lama.prod-1/api/re
 register_json=$(echo "${lama_response}" | head -n 1)
 status_code=$(echo "${lama_response}" | tail -n 1)
 
-if [[ "${status_code}" == "200" ]]; then
-    setname=$(echo "${register_json}" | jq -r '.set_name')
-elif [[ "${status_code}" == "500" ]]; then
-    setname="null"
-else
-    message=$(echo "${register_json}" | jq -r '.message')
-    die "${status_code} ${message}"
-fi
-
 # API checks
 # info "Check Hartwig API samples on ${barcode}"
 hmf_api_sample_json=$(hmf_api_get "samples?barcode=${barcode}")
@@ -85,6 +76,15 @@ if [[ ! ${hmf_api_sample_json} == "[]" ]]; then
     else
         warn "The sample ${barcode} already exist with status ${status}"
     fi
+fi
+
+if [[ "${status_code}" == "200" ]]; then
+    setname=$(echo "${register_json}" | jq -r '.set_name')
+elif [[ "${status_code}" == "500" ]]; then
+    setname="null"
+else
+    message=$(echo "${register_json}" | jq -r '.message')
+    die "${status_code} ${message}"
 fi
 
 # info "Check Hartwig API runs on ${barcode}"
