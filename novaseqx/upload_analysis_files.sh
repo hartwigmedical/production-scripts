@@ -14,16 +14,16 @@ LAMA_API_ENDPOINT="${LAMA_BASE_URL}/api/sequencing/sequencing-run-data"
 FLOWCELL_FOLDER_NAME="$1}"
 FLOWCELL_FOLDER_NAME="${FLOWCELL_FOLDER_NAME%/}"
 if [ -z "${FLOWCELL_FOLDER_NAME}" ]; then
-  echo "Error: Provide a run directory"
-  echo "Example: ./upload_finished_analysis_files.sh [FLOWCELL_FOLDER_NAME] [FLOWCELL_ID]"
-  echo "Specify which analysis should be uploaded in the path e.g. [FLOWCELL_FOLDER_NAME]/Analysis/1/Data"
+  echo "Error: Provide a run directory" >&2
+  echo "Example: ./upload_finished_analysis_files.sh [FLOWCELL_FOLDER_NAME] [FLOWCELL_ID]" >&2
+  echo "Specify which analysis should be uploaded in the path e.g. [FLOWCELL_FOLDER_NAME]/Analysis/1/Data" >&2
   exit 1
 fi
 
 FLOWCELL_ID="$2"
 FLOWCELL_ID="${FLOWCELL_ID#/}"
 if [[ -z "${FLOWCELL_ID}" ]]; then
-    echo "Error: provide a flowcell ID, this must be set and unique otherwise the files will be overridden"
+    echo "Error: provide a flowcell ID, this must be set and unique otherwise the files will be overridden for folder ${FLOWCELL_FOLDER_NAME}" >&2
     exit 1
 fi
 
@@ -68,7 +68,7 @@ upload_files_to_gcp() {
     local files=("${@:3}")
 
     if [ ${#files[@]} -eq 0 ]; then
-        timed_echo "No files found matching ${pattern}"
+        timed_echo "No files found matching ${pattern} for flowcell ${FLOWCELL_ID}" >&2
         return
     fi
 
