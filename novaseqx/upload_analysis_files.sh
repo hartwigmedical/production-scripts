@@ -44,24 +44,6 @@ RUN_PARAMETERS_NAME="RunParameters.xml"
 MOUNTED_FILES=("${QUALITY_METRICS_NAME}" "SampleSheet.csv" "Demultiplex_Stats.csv" "${TOP_UNKNOWN_BARCODES_NAME}" "RunInfo.xml")
 LOCAL_FILES=("${RUN_PARAMETERS_NAME}")
 
-find_files() {
-    local -n _result=$1
-    local pattern="*$2"
-    local folder=$3
-    timed_echo
-    timed_echo "----------$pattern------------"
-
-    _result=()
-    while IFS= read -r file; do
-        if [[ ${folder} == "fastq" ]]; then
-            uploaded_file_name=$(echo "$(basename ${file} | cut -d_ -f1)_${FLOWCELL_ID}_$(basename ${file} | cut -d_ -f2-)")
-        else
-            uploaded_file_name=$(basename ${file})
-        fi
-        _result+=("${file}:${uploaded_file_name}")
-    done < <(find "${folder}" -type f -name "${pattern}")
-}
-
 upload_files_to_gcp() {
     local pattern="*$1"
     local cloud_folder=$2
@@ -80,39 +62,47 @@ upload_files_to_gcp() {
     timed_echo "Done uploading the ${pattern} files"
 }
 
-# Find fastq files upfront — needed by both GCP upload and LAMA API call
-find_files fastq_pairs ".fastq.gz" "${MOUNTED_FOLDER}"
-
+# Find and upload fastq files - folder = fastq
+fastq_pairs=()
 fastq_names=()
-for pair in "${fastq_pairs[@]}"; do
-    fastq_names+=("${pair##*:}")
-done
+while IFS= read -r file; do
+    uploaded_name="$(basename "${file}" | cut -d_ -f1)_${FLOWCELL_ID}_$(basename "${file}" | cut -d_ -f2-)"
+    fastq_pairs+=("${file}:${uploaded_name}")
+    fastq_names+=("${uploaded_name}")
+done < <(find "${MOUNTED_FOLDER}" -type f -name "*.fastq.gz")
 
-# Upload all files to GCP
 upload_files_to_gcp ".fastq.gz" "fastq" "${fastq_pairs[@]}"
-for file in "${MOUNTED_FILES[@]}"; do
-    find_files pairs "${file}" "${MOUNTED_FOLDER}"
-    upload_files_to_gcp "${file}" "other" "${pairs[@]}"
-done
-for file in "${LOCAL_FILES[@]}"; do
-    find_files pairs "${file}" "${LOCAL_FOLDER}"
-    upload_files_to_gcp "${file}" "other" "${pairs[@]}"
-done
-timed_echo "All GCP uploads completed"
 
-# Make LAMA API call after GCP uploads finish
-quality_metrics=$(find "${MOUNTED_FOLDER}" -type f -name "${QUALITY_METRICS_NAME}" | head -1)
-unknown_barcodes=$(find "${MOUNTED_FOLDER}" -type f -name "${TOP_UNKNOWN_BARCODES_NAME}" | head -1)
-run_parameters=$(find "${LOCAL_FOLDER}" -type f -name "${RUN_PARAMETERS_NAME}" | head -1)
+# Find and upload mounted files - folder = other
+quality_metrics_full_path=""
+unknown_barcodes_full_path=""
+for file_name in "${MOUNTED_FILES[@]}"; do
+    file_path=$(find "${MOUNTED_FOLDER}" -type f -name "${file_name}" | head -1)
+    [[ -z "${file_path}" ]] && continue
+    upload_files_to_gcp "${file_name}" "other" "${file_path}:${file_name}"
+    [[ "${file_name}" == "${QUALITY_METRICS_NAME}" ]] && quality_metrics_full_path="${file_path}"
+    [[ "${file_name}" == "${TOP_UNKNOWN_BARCODES_NAME}" ]] && unknown_barcodes_full_path="${file_path}"
+done
+
+# Find and upload local files - folder = other
+run_parameters_full_path=""
+for file_name in "${LOCAL_FILES[@]}"; do
+    file_path=$(find "${LOCAL_FOLDER}" -type f -name "${file_name}" | head -1)
+    [[ -z "${file_path}" ]] && continue
+    upload_files_to_gcp "${file_name}" "other" "${file_path}:${file_name}"
+    [[ "${file_name}" == "${RUN_PARAMETERS_NAME}" ]] && run_parameters_full_path="${file_path}"
+done
+
+timed_echo "All GCP uploads completed"
 
 timed_echo "Calling LAMA API with ${#fastq_names[@]} fastq files"
 printf '%s\n' "${fastq_names[@]}" | curl -X 'POST' \
   "${LAMA_API_ENDPOINT}" \
   -H 'accept: */*' \
   -H 'Content-Type: multipart/form-data' \
-  -F "quality-metrics=@${quality_metrics};type=text/csv" \
-  -F "unknown-barcodes=@${unknown_barcodes};type=text/csv" \
-  -F "run-parameters=@${run_parameters};type=text/xml" \
+  -F "quality-metrics=@${quality_metrics_full_path};type=text/csv" \
+  -F "unknown-barcodes=@${unknown_barcodes_full_path};type=text/csv" \
+  -F "run-parameters=@${run_parameters_full_path};type=text/xml" \
   -F "fastq-files=@-;type=text/plain"
 
 timed_echo "Finished processing flowcell ${FLOWCELL_ID}"
