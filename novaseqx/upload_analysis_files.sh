@@ -40,9 +40,10 @@ ANALYSIS_MOUNTED_FOLDER="/usr/local/illumina/mnt/runs/${FLOWCELL_ID}/Analysis/${
 LOCAL_FOLDER="/usr/local/illumina/runs/${FLOWCELL_ID}"
 GCP_URI_BASE="novaseq/${FLOWCELL_ID}"
 
-# Files
+# Files uploaded to LAMA as well
+QUALITY_METRICS_NAME="Quality_Metrics.csv"
+TOP_UNKNOWN_BARCODES_NAME="Top_Unknown_Barcodes.csv"
 RUN_PARAMETERS_NAME="RunParameters.xml"
-LOCAL_FILES=("${RUN_PARAMETERS_NAME}")
 
 upload_files_to_gcp() {
     local pattern="*$1"
@@ -81,12 +82,9 @@ done < <(find "${ANALYSIS_MOUNTED_FOLDER}" -type f -name "*.fastq.gz")
 upload_files_to_gcp ".fastq.gz" "fastq" "${fastq_pairs[@]}"
 
 # Find and upload mounted files - GCP folder = other
-QUALITY_METRICS_NAME="Quality_Metrics.csv"
-TOP_UNKNOWN_BARCODES_NAME="Top_Unknown_Barcodes.csv"
-ANALYSIS_MOUNTED_FILES=("${QUALITY_METRICS_NAME}" "Demultiplex_Stats.csv" "${TOP_UNKNOWN_BARCODES_NAME}")
-
 quality_metrics_full_path=""
 unknown_barcodes_full_path=""
+ANALYSIS_MOUNTED_FILES=("${QUALITY_METRICS_NAME}" "Demultiplex_Stats.csv" "${TOP_UNKNOWN_BARCODES_NAME}")
 for file_name in "${ANALYSIS_MOUNTED_FILES[@]}"; do
     file_path=$(find "${ANALYSIS_MOUNTED_FOLDER}" -type f -name "${file_name}" | head -1)
     [[ -z "${file_path}" ]] && continue
@@ -104,6 +102,7 @@ done
 
 # Find and upload local files - GCP folder = other
 run_parameters_full_path=""
+LOCAL_FILES=("${RUN_PARAMETERS_NAME}")
 for file_name in "${LOCAL_FILES[@]}"; do
     file_path=$(find "${LOCAL_FOLDER}" -type f -name "${file_name}" | head -1)
     [[ -z "${file_path}" ]] && continue
