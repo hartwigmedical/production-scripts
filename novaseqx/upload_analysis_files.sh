@@ -11,18 +11,18 @@ LAMA_BASE_URL="http://lama.prod-1"
 LAMA_API_ENDPOINT="${LAMA_BASE_URL}/api/sequencing/sequencing-run-data"
 
 # Validate input
-SECONDARY_ANALYSIS_COMPLETED_LOCATION="$1"
-SECONDARY_ANALYSIS_COMPLETED_LOCATION="${SECONDARY_ANALYSIS_COMPLETED_LOCATION%/}"
-if [ -z "${SECONDARY_ANALYSIS_COMPLETED_LOCATION}" ]; then
+ANALYSIS_COMPLETED_FILE_PATH="$1"
+ANALYSIS_COMPLETED_FILE_PATH="${ANALYSIS_COMPLETED_FILE_PATH%/}"
+if [ -z "${ANALYSIS_COMPLETED_FILE_PATH}" ]; then
   echo "Error: Provide a run directory" >&2
-  echo "Example: ./upload_analysis_files.sh [SECONDARY_ANALYSIS_COMPLETED_LOCATION] [--dry-run]" >&2
+  echo "Example: ./upload_analysis_files.sh [ANALYSIS_COMPLETED_FILE_PATH] [--dry-run]" >&2
   echo "Specify which where the secondary analysis was found e.g /usr/local/illumina/mnr/runs/[flowcell_id]/Analysis/1/Data/Secondary_Analysis_Completed.txt" >&2
   exit 1
 fi
-timed_echo "Received request for: ${SECONDARY_ANALYSIS_COMPLETED_LOCATION}"
+timed_echo "Received request for: ${ANALYSIS_COMPLETED_FILE_PATH}"
 
-FLOWCELL_ID=$(echo "${SECONDARY_ANALYSIS_COMPLETED_LOCATION}" | cut -d / -f7) # e.g. 20260101_LH0001_0001_FLOWCELL
-ANALYSIS_NUMBER=$(echo "${SECONDARY_ANALYSIS_COMPLETED_LOCATION}" | cut -d / -f9)
+FLOWCELL_ID=$(echo "${ANALYSIS_COMPLETED_FILE_PATH}" | cut -d / -f7) # e.g. 20260101_LH0001_0001_FLOWCELL
+ANALYSIS_NUMBER=$(echo "${ANALYSIS_COMPLETED_FILE_PATH}" | cut -d / -f9)
 FLOWCELL=$(echo "${FLOWCELL_ID}" | cut -d _ -f4)
 timed_echo "Flowcell ID: ${FLOWCELL_ID}, Analysis Number: ${ANALYSIS_NUMBER}"
 
