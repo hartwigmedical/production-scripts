@@ -15,7 +15,7 @@ FLOWCELL_FOLDER_NAME="$1}"
 FLOWCELL_FOLDER_NAME="${FLOWCELL_FOLDER_NAME%/}"
 if [ -z "${FLOWCELL_FOLDER_NAME}" ]; then
   echo "Error: Provide a run directory" >&2
-  echo "Example: ./upload_finished_analysis_files.sh [FLOWCELL_FOLDER_NAME] [FLOWCELL_ID]" >&2
+  echo "Example: ./upload_finished_analysis_files.sh [FLOWCELL_FOLDER_NAME] [FLOWCELL_ID] [--dry-run]" >&2
   echo "Specify which analysis should be uploaded in the path e.g. [FLOWCELL_FOLDER_NAME]/Analysis/1/Data" >&2
   exit 1
 fi
@@ -26,6 +26,10 @@ if [[ -z "${FLOWCELL_ID}" ]]; then
     echo "Error: provide a flowcell ID, this must be set and unique otherwise the files will be overridden for folder ${FLOWCELL_FOLDER_NAME}" >&2
     exit 1
 fi
+
+DRY_RUN=false
+[[ "$3" == "--dry-run" ]] && DRY_RUN=true
+[[ "${DRY_RUN}" == true ]] && timed_echo "Dry run enabled — no uploads or API calls will be made"
 
 # Settings
 MAX_PARALLEL_UPLOADS=6
@@ -56,8 +60,14 @@ upload_files_to_gcp() {
 
     local full_gcp_uri="${GCP_URI_BASE}/${cloud_folder}"
     timed_echo "Starting to upload ${pattern} (${#files[@]}) files to ${full_gcp_uri}"
-    printf "%s\n" "${files[@]}" | parallel -j ${MAX_PARALLEL_UPLOADS} -C ':' './upload-file.sh' {1} "${full_gcp_uri}/"{2}
-    wait
+    if [[ "${DRY_RUN}" == true ]]; then
+        for file_pair in "${files[@]}"; do
+            echo "  ./upload-file.sh ${file_pair%%:*} ${full_gcp_uri}/${file_pair##*:}"
+        done
+    else
+        printf "%s\n" "${files[@]}" | parallel -j ${MAX_PARALLEL_UPLOADS} -C ':' './upload-file.sh' {1} "${full_gcp_uri}/"{2}
+        wait
+    fi
 
     timed_echo "Done uploading the ${pattern} files"
 }
@@ -96,14 +106,23 @@ done
 timed_echo "All GCP uploads completed"
 
 timed_echo "Calling LAMA API with ${#fastq_names[@]} fastq files"
-printf '%s\n' "${fastq_names[@]}" | curl -X 'POST' \
-  "${LAMA_API_ENDPOINT}" \
-  -H 'accept: */*' \
-  -H 'Content-Type: multipart/form-data' \
-  -F "quality-metrics=@${quality_metrics_full_path};type=text/csv" \
-  -F "unknown-barcodes=@${unknown_barcodes_full_path};type=text/csv" \
-  -F "run-parameters=@${run_parameters_full_path};type=text/xml" \
-  -F "fastq-files=@-;type=text/plain"
+if [[ "${DRY_RUN}" == true ]]; then
+    printf '%s\n' "${fastq_names[@]}"
+    echo "  curl -X 'POST' '${LAMA_API_ENDPOINT}' \\"
+    echo "    -F 'quality-metrics=@${quality_metrics_full_path};type=text/csv' \\"
+    echo "    -F 'unknown-barcodes=@${unknown_barcodes_full_path};type=text/csv' \\"
+    echo "    -F 'run-parameters=@${run_parameters_full_path};type=text/xml' \\"
+    echo "    -F 'fastq-files=<${#fastq_names[@]} fastq filenames>;type=text/plain'"
+else
+    printf '%s\n' "${fastq_names[@]}" | curl -X 'POST' \
+      "${LAMA_API_ENDPOINT}" \
+      -H 'accept: */*' \
+      -H 'Content-Type: multipart/form-data' \
+      -F "quality-metrics=@${quality_metrics_full_path};type=text/csv" \
+      -F "unknown-barcodes=@${unknown_barcodes_full_path};type=text/csv" \
+      -F "run-parameters=@${run_parameters_full_path};type=text/xml" \
+      -F "fastq-files=@-;type=text/plain"
+fi
 
 timed_echo "Finished processing flowcell ${FLOWCELL_ID}"
 
