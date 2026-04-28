@@ -38,7 +38,7 @@ sudo systemctl start monitor_conversion.service
 <H3>Uploading Manually</H3>
 Running the `upload_finished_analysis_files.sh` is also possible by calling:
 ```bash
-upload_finished_analysis_files.sh /usr/local/illumina/runs/<flowcell_id> <flowcell_id>
+upload_finished_analysis_files.sh /usr/local/illumina/mnt/runs/<flowcell_folder> <flowcell_id>
 ```
 It will create file(s) in the output bucket in the format of:
 - gs://output-bucket/novaseq/<flowcell_id>/fastq/file.fastq.gz
@@ -48,6 +48,11 @@ It will create file(s) in the output bucket in the format of:
 - gs://output-bucket/novaseq/<flowcell_id>/other/RunParameters.xml
 - gs://output-bucket/novaseq/<flowcell_id>/other/Demultiplex_Stats.csv
 - gs://output-bucket/novaseq/<flowcell_id>/other/Top_Unknown_Barcodes.csv
+
+Note: The RunParameters.xml file is in a different runs folder than the other files.
+```
+/usr/local/illumina/runs/<flowcell_folder>/RunParameters.xml
+```
 
 <H3>Requirements</H3>
 Make sure to follow the readme in the portal-api repository to setup authentication and server url `upload-server/scripts/README.md`.
