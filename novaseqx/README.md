@@ -3,26 +3,25 @@ The `monitor_conversion_ready.sh` script will be used to trigger uploads from th
 It will trigger an uploading process in case it finds a new folder with the `Secondary_Analysis_Complete.txt` file in it.
 This file indicates that the BCLConvert has completed and the files are ready to be uploaded.
 
-It uses `upload_finished_analysis_files.sh` to upload the files.
-- **Input**: Takes a run directory path as an argument
-    - E.g, format: `/base/dir/20250101_LH00001_0001_A01CLVJLT1`
+It uses `upload_analysis_files.sh` to upload the files.
+- **Input**: Takes a Secondary_Analysis_Complete.txt file path as input.
+    - E.g, format: `/usr/local/illumina/mnt/runs/20250101_LH00001_0001_A01CLVJLT1/Analysis/1/Data/Secondary_Analysis_Complete.txt`
   
 - **Files**: Recursively searches for the following file types:
     - FASTQ
-    - BCL
-    - CBCL
     - Quality metrics, SampleSheet, RunInfo, RunParameters, etc.
 
 - **Upload Process**: Files are uploaded to GCP buckets organized by type
     - Each file type is stored in its dedicated folder
     - Upload functionality is handled by the script located in the `upload-server` directory of the `portal-api` repository
+    - A call is done to the LAMA api with all quality metrics and metadata files
 
 **Tracking uploaded files**
 Uploaded files are being tracked in a log file. Every time a file is found, it is checked against this file.
 The logfile '.processed_analysis_files.log' is created in the same directory as the scripts are located in.
 
 The script `upload-server/scripts/upload-file.sh` is used for this purpose.
-This script should be in the same directory as the `upload_finished_analysis_files.sh` script and executable as this communicates with the upload-server.
+This script should be in the same directory as the `upload_analysis_files.sh` script and executable as this communicates with the upload-server.
 
 - **Starting the Monitoring Service**
 The monitoring service is started by adding the `monitor_conversion.service`.
@@ -36,17 +35,23 @@ sudo systemctl start monitor_conversion.service
 ```
 
 <H3>Uploading Manually</H3>
-Running the `upload_finished_analysis_files.sh` is also possible by calling:
+Running the `upload_analysis_files.sh` is also possible by calling:
 ```bash
-upload_finished_analysis_files.sh /base/folder/runname runname
+upload_analysis_files.sh /usr/local/illumina/mnt/runs/<flowcell_folder>/Analysis/1/Data/Secondary_Analysis_Complete.txt
 ```
 It will create file(s) in the output bucket in the format of:
-- gs://output-bucket/novaseq/runname/fastq/file.fastq.gz
-- gs://output-bucket/novaseq/runname/cbcl/L00X/CX.X/file.cbcl
-- gs://output-bucket/novaseq/runname/other/Quality_Metrics.csv
-- gs://output-bucket/novaseq/runname/other/SampleSheet.csv
-- gs://output-bucket/novaseq/runname/other/RunInfo.xml
-- gs://output-bucket/novaseq/runname/other/RunParameters.xml
+- gs://output-bucket/novaseq/<flowcell_id>/fastq/file.fastq.gz
+- gs://output-bucket/novaseq/<flowcell_id>/other/Quality_Metrics.csv
+- gs://output-bucket/novaseq/<flowcell_id>/other/SampleSheet.csv
+- gs://output-bucket/novaseq/<flowcell_id>/other/RunInfo.xml
+- gs://output-bucket/novaseq/<flowcell_id>/other/RunParameters.xml
+- gs://output-bucket/novaseq/<flowcell_id>/other/Demultiplex_Stats.csv
+- gs://output-bucket/novaseq/<flowcell_id>/other/Top_Unknown_Barcodes.csv
+
+Note: The RunParameters.xml file is in a different runs folder than the other files.
+```
+/usr/local/illumina/runs/<flowcell_folder>/RunParameters.xml
+```
 
 <H3>Requirements</H3>
 Make sure to follow the readme in the portal-api repository to setup authentication and server url `upload-server/scripts/README.md`.
