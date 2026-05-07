@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <app.jackson.version>2.17.2</app.jackson.version>
+        <app.jackson.version>3.1.3</app.jackson.version>
         <app.kotlin-logging.version>7.0.3</app.kotlin-logging.version>
         <app.logback.version>1.5.32</app.logback.version>
         <app.picocli.version>4.7.6</app.picocli.version>
@@ -39,7 +39,7 @@
             <version>${app.picocli.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
+            <groupId>tools.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
             <version>${app.jackson.version}</version>
         </dependency>

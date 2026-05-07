@@ -1,7 +1,7 @@
 package com.hartwig.pipeline.tools.shallowqc
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 import com.hartwig.pipeline.tools.shallowqc.api.ShallowQcCommand
 import com.hartwig.pipeline.tools.shallowqc.api.ShallowQcResult
 import org.junit.jupiter.api.Assertions.assertEquals

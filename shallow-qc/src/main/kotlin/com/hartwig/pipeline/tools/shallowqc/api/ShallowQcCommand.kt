@@ -1,8 +1,9 @@
 package com.hartwig.pipeline.tools.shallowqc.api
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.kotlinModule
+import tools.jackson.module.kotlin.readValue
 import com.hartwig.pipeline.tools.shallowqc.model.PipelineMetadata
 import com.hartwig.pipeline.tools.shallowqc.model.PurpleResult
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -31,8 +32,10 @@ class ShallowQcCommand : Callable<Int> {
     @Option(names = ["--output-dir"], description = ["Directory to write output to (default: current directory)"])
     private var outputDir: File = File(".")
 
-    private val mapper = jacksonObjectMapper()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    private val mapper = JsonMapper.builder()
+        .addModule(kotlinModule())
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .build()
 
     override fun call(): Int {
         try {
