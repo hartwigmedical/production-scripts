@@ -5,7 +5,7 @@ RUN mvn dependency:go-offline -q
 COPY src ./src
 RUN mvn package -DskipTests -q
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /build/target/shallow-qc.jar .
 ENTRYPOINT ["java", "-jar", "/app/shallow-qc.jar"]
