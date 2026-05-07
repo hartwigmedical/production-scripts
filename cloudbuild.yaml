@@ -1,6 +1,6 @@
 steps:
   - id: 'Build and push tool image'
     name: 'europe-west4-docker.pkg.dev/hmf-build/hmf-docker/docker-tag:1.8.0-alpha.1'
-    args: [ 'europe-west4-docker.pkg.dev/hmf-build/hmf-docker', '$TAG_NAME', 'Dockerfile', '--cache-from-latest']
+    args: [ 'europe-west4-docker.pkg.dev/hmf-build/hmf-docker', '$TAG_NAME', 'Dockerfile', '--cache-from-latest', '--progress=plain']
 
 logsBucket: 'gs://hmf-build-logs'
