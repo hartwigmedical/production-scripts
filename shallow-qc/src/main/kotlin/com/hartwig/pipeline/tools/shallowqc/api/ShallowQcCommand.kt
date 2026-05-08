@@ -17,12 +17,11 @@ private val logger = KotlinLogging.logger {}
 
 @Command(
     name = "shallow-qc",
-    mixinStandardHelpOptions = true,
-    description = ["Generate shallow QC JSON from pipeline5 output"]
+    description = ["Generate shallow QC JSON from molecular pipeline output"]
 )
 class ShallowQcCommand : Callable<Int> {
 
-    @Option(names = ["--pipeline-output-dir"], required = true, description = ["Path to the pipeline5 output directory"])
+    @Option(names = ["--pipeline-output-dir"], required = true, description = ["Path to the pipeline output directory"])
     private lateinit var pipelineOutputDir: File
 
     @Option(names = ["--output-dir"], description = ["Directory to write output to (default: current directory)"])
