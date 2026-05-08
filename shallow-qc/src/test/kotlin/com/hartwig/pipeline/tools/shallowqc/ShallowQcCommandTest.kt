@@ -17,10 +17,10 @@ class ShallowQcCommandTest {
 
     private val mapper = jacksonObjectMapper()
 
-    private fun runScenario(scenario: String, sampleId: String = "TUMOR-01"): ShallowQcResult {
+    private fun runScenario(scenario: String): ShallowQcResult {
         val inputDir = File(javaClass.getResource("/pipeline-output/$scenario")!!.toURI())
-        CommandLine(ShallowQcCommand()).execute(sampleId, inputDir.absolutePath, "--output-dir", outputDir.absolutePath)
-        return mapper.readValue(outputDir.resolve("$sampleId.shallow-qc.json"))
+        CommandLine(ShallowQcCommand()).execute(inputDir.absolutePath, "--output-dir", outputDir.absolutePath)
+        return mapper.readValue(outputDir.resolve("shallow-qc.json"))
     }
 
     @Test
