@@ -19,7 +19,7 @@ class ShallowQcCommandTest {
 
     private fun runScenario(scenario: String): ShallowQcResult {
         val inputDir = File(javaClass.getResource("/pipeline-output/$scenario")!!.toURI())
-        CommandLine(ShallowQcCommand()).execute(inputDir.absolutePath, "--output-dir", outputDir.absolutePath)
+        CommandLine(ShallowQcCommand()).execute("--pipeline-output-dir", inputDir.absolutePath, "--output-dir", outputDir.absolutePath)
         return mapper.readValue(outputDir.resolve("shallow-qc.json"))
     }
 

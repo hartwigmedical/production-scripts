@@ -9,7 +9,6 @@ import com.hartwig.pipeline.tools.shallowqc.model.PurpleResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
-import picocli.CommandLine.Parameters
 import java.io.File
 import java.math.BigDecimal
 import java.util.concurrent.Callable
@@ -23,7 +22,7 @@ private val logger = KotlinLogging.logger {}
 )
 class ShallowQcCommand : Callable<Int> {
 
-    @Parameters(index = "0", description = ["Path to the pipeline5 output directory"])
+    @Option(names = ["--pipeline-output-dir"], required = true, description = ["Path to the pipeline5 output directory"])
     private lateinit var pipelineOutputDir: File
 
     @Option(names = ["--output-dir"], description = ["Directory to write output to (default: current directory)"])
