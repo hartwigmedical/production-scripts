@@ -1,9 +1,9 @@
 # Shallow QC
 
-Tool to extract QC information from a shallow pipeline5 run.
+Tool to extract QC information from a shallow molecular pipeline run.
 Output files:
 
-- `<sample id>.shallow-qc.json`: JSON file containing QC information
+- `shallow-qc.json`: JSON file containing QC information
 
 ## Prerequisites
 
@@ -35,7 +35,7 @@ Run it for pipeline output in `~/data/pipeline-output` with:
       -v ~/data:/data \
       -w /data/result \
       shallow-qc \
-      <sample-id> /data/pipeline-output
+      --pipeline-output-dir /data/pipeline-output
 
 In this example the output files will be written to the directory `~/data/result`.
 

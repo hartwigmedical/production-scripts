@@ -9,7 +9,6 @@ import com.hartwig.pipeline.tools.shallowqc.model.PurpleResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
-import picocli.CommandLine.Parameters
 import java.io.File
 import java.math.BigDecimal
 import java.util.concurrent.Callable
@@ -18,15 +17,11 @@ private val logger = KotlinLogging.logger {}
 
 @Command(
     name = "shallow-qc",
-    mixinStandardHelpOptions = true,
-    description = ["Generate shallow QC JSON from pipeline5 output"]
+    description = ["Generate shallow QC JSON from molecular pipeline output"]
 )
 class ShallowQcCommand : Callable<Int> {
 
-    @Parameters(index = "0", description = ["Sample ID for the output file name"])
-    private lateinit var sampleId: String
-
-    @Parameters(index = "1", description = ["Path to the pipeline5 output directory"])
+    @Option(names = ["--pipeline-output-dir"], required = true, description = ["Path to the pipeline output directory"])
     private lateinit var pipelineOutputDir: File
 
     @Option(names = ["--output-dir"], description = ["Directory to write output to (default: current directory)"])
@@ -63,11 +58,11 @@ class ShallowQcCommand : Callable<Int> {
                 shallowSequencingStatus = shallowSequencingStatus
             )
 
-            val resultFile = outputDir.resolve("${sampleId}.shallow-qc.json")
+            val resultFile = outputDir.resolve("shallow-qc.json")
             mapper.writerWithDefaultPrettyPrinter().writeValue(resultFile, result)
             return 0
         } catch (e: Exception) {
-            logger.error(e) { "Failed to run shallow QC for sample [$sampleId]" }
+            logger.error(e) { "Failed to run shallow QC" }
             return 1
         }
     }
