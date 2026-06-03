@@ -4,6 +4,7 @@ source message_functions || exit 1
 
 set -e
 
+DRUP_SAMPLES="/data/ops/lims/prod/drup_genaya.tsv"
 GAYA_SHARED=gaya_shared_intern.tsv
 GAYA_SHARED_WITH_EXTERNAL_IDS=genaya_shared_reporting_db.tsv
 DESTINATION="/data/ops/lims/prod"
@@ -18,6 +19,18 @@ shared_reports=$(hmf_api_get "reports/shared")
 info "Extract only the reports/shared for GENAYA cohort"
 shared_reports_gaya=$(jq '[ .[] |  select(.report_created.cohort == "GENAYA") ]' <<< "${shared_reports}")
 
+info "Extract particular DRUP samples which also participate in the GENAYA cohort"
+while IFS= read -r line; do
+	sample=$( echo '"'$line'",')
+	samples+=$sample
+done < ${DRUP_SAMPLES}
+
+concat_drup_samples=$(echo "${samples::-1}" | tr ',' '\n'  | jq -s .)
+shared_reports_drup=$(jq --argjson names "${concat_drup_samples}" '[.[] | select(.report_created.sample_name | IN($names[]))]' <<< "${shared_reports}")
+
+info "Merging all the relevant samples for GENAYA cohort"
+result="${shared_reports_gaya} ${shared_reports_drup}"
+
 info "Creating overview of all reported samples of GENAYA cohort"
 jq --arg na "$NA_CHAR" -r '.[] | [
     .report_created.barcode//$na,
@@ -26,7 +39,7 @@ jq --arg na "$NA_CHAR" -r '.[] | [
     (.report_created.create_time|strptime("%Y-%m-%dT%H:%M:%S")|strftime("%d-%b-%Y"))//$na,
     (.share_time|strptime("%Y-%m-%dT%H:%M:%S")|strftime("%d-%b-%Y"))//$na,
     .report_created.report_type//$na
-] | @tsv' <<< "${shared_reports_gaya}" >> "$GAYA_SHARED"
+] | @tsv' <<< "${result}" >> "$GAYA_SHARED"
 
 printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
    patientId pathologyNumber hospitalSampleLabel tumorBarcode sampleId cohort createDate shareDate reportType > ${GAYA_SHARED_WITH_EXTERNAL_IDS}
