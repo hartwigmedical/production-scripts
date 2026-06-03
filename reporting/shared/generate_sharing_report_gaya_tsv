@@ -21,12 +21,13 @@ shared_reports_gaya=$(jq '[ .[] |  select(.report_created.cohort == "GENAYA") ]'
 
 info "Extract particular DRUP samples which also participate in the GENAYA cohort"
 while IFS= read -r line; do
-	sample=$( echo '"'$line'",')
+  barcode=$( echo $line | awk '{print $1}')
+	sample=$( echo '"'$barcode'",')
 	samples+=$sample
 done < ${DRUP_SAMPLES}
 
 concat_drup_samples=$(echo "${samples::-1}" | tr ',' '\n'  | jq -s .)
-shared_reports_drup=$(jq --argjson names "${concat_drup_samples}" '[.[] | select(.report_created.sample_name | IN($names[]))]' <<< "${shared_reports}")
+shared_reports_drup=$(jq --argjson names "${concat_drup_samples}" '[.[] | select(.report_created.barcode | IN($names[]))]' <<< "${shared_reports}")
 
 info "Merging all the relevant samples for GENAYA cohort"
 result="${shared_reports_gaya} ${shared_reports_drup}"
