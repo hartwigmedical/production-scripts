@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+bucket="gs://targeted-pipeline-output-prod-1"
+runs=$(api runs 'ini=Targeted.ini&status=Finished&context=DIAGNOSTIC' | awk '{print $1}')
+
+genes=("AR" "CCNE1" "ERBB2" "FGFR2" "FLT4" "KDR" "KIT" "MDM2" "MYC" "PDGFRB" "PIK3CA" "RAF1" "ROS1" "FGFR1")
+
+for run in $runs; do
+  [[ "$run" == \#* ]] && continue
+  echo $run
+  ploidy=$(gsutil cat ${bucket}/${run}/purple/*.purple.purity.tsv | awk -F'\t' 'NR>1{print $5}' )
+  ploidy3=$(echo "$ploidy * 3" | bc -l)
+
+  echo "ploidy: $ploidy"
+  echo "ploidy *3: $ploidy3"
+
+  for gene in "${genes[@]}"; do
+      echo "gene: $gene"
+      minCN=$(gsutil cat ${bucket}/${run}/purple/*.purple.cnv.gene.tsv | grep -w $gene | awk -F'\t' '{print $5}')
+      maxCN=$(gsutil cat ${bucket}/${run}/purple/*.purple.cnv.gene.tsv | grep -w $gene | awk -F'\t' '{print $6}')
+      if (( $(echo "$minCN <= $ploidy3" | bc -l) )) && (( $(echo "$maxCN >= $ploidy3" | bc -l) )); then
+        echo "gene: $gene with minCN: $minCN with maxCN: $maxCN"
+      fi
+  done
+done
