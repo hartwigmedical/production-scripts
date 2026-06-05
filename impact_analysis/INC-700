@@ -4,7 +4,7 @@ bucket="gs://targeted-pipeline-output-prod-1"
 target="/mnt/"
 mount_bucket ${bucket} ${target}
 
-runs=$(api runs 'ini=Targeted.ini&status=Finished&context=DIAGNOSTIC' | awk '{print $1}')
+runs=$(api runs 'ini=Targeted.ini&status=Finished&context=DIAGNOSTIC' | grep -w "6.0.10" | awk '{print $1}')
 
 genes=("AR" "CCNE1" "ERBB2" "FGFR2" "FLT4" "KDR" "KIT" "MDM2" "MYC" "PDGFRB" "PIK3CA" "RAF1" "ROS1" "FGFR1")
 
