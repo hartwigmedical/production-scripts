@@ -22,3 +22,5 @@ for run in $runs; do
       fi
   done
 done
+
+echo "Done!"
