@@ -2,7 +2,7 @@
 
 bucket="targeted-pipeline-output-prod-1"
 target="/mnt/"
-mount_bucket -t ${bucket}
+mount_bucket -b ${bucket}
 
 runs=$(api runs 'ini=Targeted.ini&status=Finished&context=DIAGNOSTIC' | grep -w "6.0.10" | awk '{print $1}')
 
