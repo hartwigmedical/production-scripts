@@ -11,12 +11,12 @@ genes=("AR" "CCNE1" "ERBB2" "FGFR2" "FLT4" "KDR" "KIT" "MDM2" "MYC" "PDGFRB" "PI
 for run in $runs; do
   [[ "$run" == \#* ]] && continue
   echo "run: $run"
-  ploidy=$(cat ${target}/${bucket}/${run}/purple/*.purple.purity.tsv | awk -F'\t' 'NR>1{print $5}' )
+  ploidy=$(cat ${target}/${bucket}/${run}/purple/*.purple.purity.tsv | head -n 2 | awk -F'\t' 'NR>1{print $5}' )
   ploidy3=$(echo "$ploidy * 3" | bc -l)
 
   for gene in "${genes[@]}"; do
-      minCN=$(cat ${target}/${bucket}/${run}/purple/*.purple.cnv.gene.tsv | grep -w $gene | awk -F'\t' '{print $5}')
-      maxCN=$(cat ${target}/${bucket}/${run}/purple/*.purple.cnv.gene.tsv | grep -w $gene | awk -F'\t' '{print $6}')
+      minCN=$(cat ${target}/${bucket}/${run}/purple/*.purple.cnv.gene.tsv | grep -w $gene | head -n 1 | awk -F'\t' '{print $5}')
+      maxCN=$(cat ${target}/${bucket}/${run}/purple/*.purple.cnv.gene.tsv | grep -w $gene | head -n 1 | awk -F'\t' '{print $6}')
       if (( $(echo "$minCN <= $ploidy3" | bc -l) )) && (( $(echo "$maxCN >= $ploidy3" | bc -l) )); then
         echo "run: $run ploidy: $ploidy gene: $gene with minCN: $minCN with maxCN: $maxCN"
       fi
