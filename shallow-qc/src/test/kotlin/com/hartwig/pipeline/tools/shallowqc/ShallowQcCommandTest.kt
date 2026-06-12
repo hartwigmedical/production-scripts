@@ -28,8 +28,8 @@ class ShallowQcCommandTest {
         val result = runScenario("pass")
 
         assertEquals("PASS", result.shallowSequencingStatus)
-        assertEquals("TU000001", result.tumorIsolationBarcode)
-        assertEquals("TR000001", result.referenceIsolationBarcode)
+        assertEquals("TUMOR-01", result.tumorSampleName)
+        assertEquals("TUMOR-01-ref", result.referenceSampleName)
         assertEquals(listOf("PASS"), result.purpleStatus)
         assertEquals("NORMAL", result.purpleFitMethod)
         assertEquals("PASS", result.amberStatus)
