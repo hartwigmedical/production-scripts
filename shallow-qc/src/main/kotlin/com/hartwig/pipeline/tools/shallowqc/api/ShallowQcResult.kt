@@ -1,8 +1,8 @@
 package com.hartwig.pipeline.tools.shallowqc.api
 
 data class ShallowQcResult(
-    val tumorIsolationBarcode: String,
-    val referenceIsolationBarcode: String,
+    val tumorSampleName: String,
+    val referenceSampleName: String,
     val purpleStatus: List<String>,
     val purpleFitMethod: String,
     val amberStatus: String,

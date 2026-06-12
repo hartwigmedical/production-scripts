@@ -49,8 +49,8 @@ class ShallowQcCommand : Callable<Int> {
             )
 
             val result = ShallowQcResult(
-                tumorIsolationBarcode = pipelineMetadata.tumor.barcode,
-                referenceIsolationBarcode = pipelineMetadata.reference.barcode,
+                tumorSampleName = tumorSampleName,
+                referenceSampleName = referenceSampleName,
                 purpleStatus = purpleQcStatus.split(","),
                 purpleFitMethod = purpleResult.fitMethod,
                 amberStatus = amberStatus,
