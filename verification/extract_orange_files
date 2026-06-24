@@ -2,7 +2,7 @@
 
 run=$1 && shift
 
-gsutil ls "gs://diagnostic-pipeline-output-prod-1/${run}/orange/*.orange.json" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
-gsutil ls "gs://diagnostic-pipeline-output-prod-1/${run}/orange/*.orange.pdf" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
-gsutil ls "gs://diagnostic-pipeline-output-prod-1/${run}/cuppa/*.cup.report.summary.png" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
-gsutil ls "gs://diagnostic-pipeline-output-prod-1/${run}/purple/plot/*.circos.png" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
+gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/orange/*.orange.json" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
+gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/orange/*.orange.pdf" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
+gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/cuppa/*.cup.report.summary.png" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
+gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/purple/plot/*.circos.png" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
