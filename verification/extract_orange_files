@@ -2,7 +2,7 @@
 
 run=$1 && shift
 
-gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/orange/*.orange.json" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
-gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/orange/*.orange.pdf" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
-gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/cuppa/*.cup.report.summary.png" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
-gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/purple/plot/*.circos.png" "gs://oncoactin_test_data/ver-8.0.9/test_cases/${run}/input/"
+gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/orange/*.orange.json" "gs://gs://hmf-ops-crunch-bridge//ver-8.0.9/test_cases/260612_CORE_FR34215475_FR34215557/input/"
+gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/orange/*.orange.pdf" "gs://gs://hmf-ops-crunch-bridge//ver-8.0.9/test_cases/${run}/input/"
+gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/cuppa/*.cup.report.summary.png" "gs://gs://hmf-ops-crunch-bridge//ver-8.0.9/test_cases/${run}/input/"
+gsutil cp "gs://diagnostic-pipeline-output-prod-1/${run}/purple/plot/*.circos.png" "gs://gs://hmf-ops-crunch-bridge//ver-8.0.9/test_cases/${run}/input/"
