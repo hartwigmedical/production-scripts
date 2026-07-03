@@ -1,11 +1,5 @@
 #!/usr/libexec/platform-python
 """Stdlib unittest suite for monitor.py state/scan logic (platform-python 3.6).
-
-    /usr/libexec/platform-python test_monitor.py
-
-Uploader.process is stubbed here; the real upload/LAMA behaviour is covered in
-test_uploader.py. This focuses on: only-mark-completed-on-success, resume of
-failed flowcells, and dry-run leaving no state.
 """
 
 import json
