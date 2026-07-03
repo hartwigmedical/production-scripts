@@ -64,9 +64,22 @@ sudo systemctl enable fastq_upload.service
 sudo systemctl start fastq_upload.service
 ```
 
-<H3>Tests</H3>
-Standard-library `unittest`, run on the same interpreter:
+<H3>Running the unit tests</H3>
+The suites use only the standard-library `unittest` module — no `pip install`, no network, and no real uploads. Each test builds a throwaway run tree in a temp dir, points at a stub `upload-file.sh`, and talks to a local in-process HTTP server for the LAMA calls, so they are safe to run anywhere.
+
+- `test_uploader.py` — path parsing, the flowcell-token rename, the upload manifest / dest URIs, multipart encoding, retry, resume, and LAMA status handling.
+- `test_monitor.py` — state tracking (only-mark-completed-on-success, retry of failed flowcells, dry-run writes no state).
+
+Run them on the same interpreter the service uses (do this on the instrument before enabling the service, to catch any Python 3.6 issue):
 ```bash
+# Run each suite:
 /usr/libexec/platform-python test_uploader.py
 /usr/libexec/platform-python test_monitor.py
+
+# ...or discover and run both at once:
+/usr/libexec/platform-python -m unittest discover -p 'test_*.py'
+
+# Add -v for per-test output:
+/usr/libexec/platform-python test_uploader.py -v
 ```
+All tests should report `OK`. During local development any Python 3.6+ works (`python3` in place of the platform-python path).

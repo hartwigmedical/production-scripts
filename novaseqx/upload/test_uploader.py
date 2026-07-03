@@ -1,10 +1,5 @@
 #!/usr/libexec/platform-python
 """Stdlib unittest suite for uploader.py (run under platform-python 3.6).
-
-    /usr/libexec/platform-python test_uploader.py
-
-Covers the upload manifest (dest URIs / fastq rename / LAMA parts) plus the
-retry, resume and LAMA-status behaviour.
 """
 
 import http.server
