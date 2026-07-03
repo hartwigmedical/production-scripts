@@ -57,11 +57,11 @@ A real run with a blank `server_url`/`auth_token` fails fast with a clear error 
 - Retries are two-layered: each `upload-file.sh` call and the LAMA POST retry with exponential backoff within a run; a `failed` flowcell is re-attempted on the next poll and **skips files already uploaded** (and skips LAMA if it already succeeded).
 
 <H3>Starting the service</H3>
-The unit assumes all scripts live in `/usr/local/hartwig/monitoring_service`. It must be placed in `/etc/systemd/system` on the NovaSeq X (SELinux enforces this). Then:
+The unit assumes all scripts live in `/usr/local/hartwig/fastq_upload`. It must be placed in `/etc/systemd/system` on the NovaSeq X (SELinux enforces this). Then:
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable monitor_conversion.service
-sudo systemctl start monitor_conversion.service
+sudo systemctl enable fastq_upload.service
+sudo systemctl start fastq_upload.service
 ```
 
 <H3>Tests</H3>
