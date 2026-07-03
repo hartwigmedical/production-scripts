@@ -1,0 +1,15 @@
+[Unit]
+Description=Monitor NovaSeq X for ready Secondary_Analysis_Complete.txt and upload files to GCP
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/platform-python /usr/local/hartwig/fastq_upload/monitor.py /usr/local/illumina/mnt/runs
+Restart=always
+RestartSec=5
+WorkingDirectory=/usr/local/hartwig/fastq_upload/
+StandardOutput=append:/usr/local/hartwig/fastq_upload/fastq_upload.log
+StandardError=append:/usr/local/hartwig/fastq_upload/fastq_upload.err
+
+[Install]
+WantedBy=default.target
