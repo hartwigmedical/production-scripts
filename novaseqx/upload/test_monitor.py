@@ -30,7 +30,7 @@ class MonitorTestBase(unittest.TestCase):
 
         self.config = Config(
             server_url="u", auth_token="t", max_parallel_uploads=4,
-            upload_max_attempts=1, retry_base_delay=0, lama_base_url="http://lama.invalid",
+            upload_max_attempts=1, retry_base_delay=0, upload_timeout=5, lama_base_url="http://lama.invalid",
             lama_endpoint="api/sequencing/sequencing-run-data",
             lama_max_attempts=1, http_timeout=5,
             mnt_runs_root=str(self.base), local_runs_root=str(self.tmp / "runs"),
@@ -52,7 +52,7 @@ class MonitorTestBase(unittest.TestCase):
                 progress["lama_done"] = success
             return uploader.UploadResult(success, 1, ["novaseq/x/fastq/a"], 0,
                                          0 if success else 1, success,
-                                         None if success else "boom")
+                                         None if success else "error message placeholder")
         self._patch(uploader.Uploader, "process", fake)
 
     def read_state(self):

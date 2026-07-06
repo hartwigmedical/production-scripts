@@ -143,10 +143,10 @@ class PlanTests(UploaderTestBase):
             "SampleA_TESTFLOWCELL_S1_L001_R2_001.fastq.gz",
         ])
 
-    def test_missing_optional_file_is_skipped(self):
+    def test_missing_required_file_raises(self):
         self.samplesheet.unlink()
-        manifest = self.build_manifest()
-        self.assertFalse(any(i.dest_uri.endswith("/other/SampleSheet.csv") for i in manifest.items))
+        with self.assertRaises(uploader.UploadError):
+            self.build_manifest()
 
 
 class MultipartTests(UploaderTestBase):
@@ -201,6 +201,18 @@ class UploadExecutionTests(UploaderTestBase):
         self.assertEqual(result, item.dest_uri)
         self.assertEqual(counter.read_text().strip(), "3")  # 2 failures + 1 success
 
+    def test_upload_timeout_retries_then_fails(self):
+        counter = self.tmp / "attempts"
+        self._install_stub('#!/bin/bash\necho x >> "$TIMEOUT_COUNTER"\nsleep 5\n')
+        os.environ["TIMEOUT_COUNTER"] = str(counter)
+        self.addCleanup(os.environ.pop, "TIMEOUT_COUNTER", None)
+        config = self.config._replace(upload_timeout=0.3, upload_max_attempts=2, retry_base_delay=0)
+
+        item = uploader.UploadItem(str(self.fastq_r1), self.gcp + "/fastq/x.fastq.gz")
+        with self.assertRaises(uploader.UploadError):
+            uploader.Uploader(config)._upload_one(item, os.environ.copy())
+        self.assertEqual(len(counter.read_text().split()), 2)  # hung upload timed out and was retried
+
     def test_resume_skips_already_uploaded(self):
         log = self.tmp / "uploaded.log"
         self._install_stub("#!/bin/bash\necho \"$2\" >> \"$UPLOAD_LOG\"\nexit 0\n")
@@ -222,17 +234,17 @@ class UploadExecutionTests(UploaderTestBase):
         self.assertIn(self.gcp + "/other/Quality_Metrics.csv", uploaded_now)
         self.assertTrue(progress["lama_done"])
 
-    def test_failed_upload_blocks_lama_and_marks_failed(self):
+    def test_failed_upload_still_registers_with_lama_and_marks_failed(self):
         self._install_stub("#!/bin/bash\necho boom >&2\nexit 1\n")
         called = self._stub_lama()
         fast_config = self.config._replace(upload_max_attempts=1)
 
         result = uploader.Uploader(fast_config).process(
             str(self.secondary), progress={"uploaded": [], "lama_done": False})
-        self.assertFalse(result.success)
+        self.assertFalse(result.success)          # failed uploads -> not completed
         self.assertGreater(result.failed, 0)
-        self.assertFalse(result.lama_done)
-        self.assertEqual(called["count"], 0)  # LAMA never called when uploads fail
+        self.assertTrue(result.lama_done)         # ...but LAMA is still called
+        self.assertEqual(called["count"], 1)      # exactly once, with all discovered files
 
 
 class _CapturingHandler(http.server.BaseHTTPRequestHandler):
@@ -289,12 +301,6 @@ class LamaPostTests(UploaderTestBase):
         with self.assertRaises(uploader.UploadError):
             uploader.Uploader(config)._post_to_lama(manifest)
         self.assertEqual(len(requests), 2)  # retried up to lama_max_attempts
-
-    def test_lama_missing_required_file_raises(self):
-        self.run_parameters.unlink()
-        manifest = self.build_manifest()
-        with self.assertRaises(uploader.UploadError):
-            uploader.Uploader(self.config)._post_to_lama(manifest)
 
 
 if __name__ == "__main__":

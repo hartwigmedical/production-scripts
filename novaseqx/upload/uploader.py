@@ -21,7 +21,6 @@ LOG = logging.getLogger("novaseqx.uploader")
 SCRIPT_DIR = Path(__file__).resolve().parent
 UPLOAD_FILE_SCRIPT = SCRIPT_DIR / "upload-file.sh"
 
-MOUNTED_OTHER_FILES = ("SampleSheet.csv", "RunInfo.xml")
 SECONDARY_ANALYSIS_FILE = "Secondary_Analysis_Complete.txt"
 
 class UploadError(Exception):
@@ -115,11 +114,15 @@ class Uploader:
         all_uploaded = sorted(already_uploaded.union(uploaded))
         progress["uploaded"] = all_uploaded
 
-        lama_error = None
         if failed:
-            LOG.error("%d file(s) failed to upload for %s; not calling LAMA yet",
+            LOG.error("%d file(s) failed to upload for %s; the flowcell will be retried on the next scan",
                       len(failed), run.flowcell_id)
-        elif lama_done:
+
+        # LAMA always receives every discovered fastq (the expected manifest), regardless of
+        # whether each upload succeeded. It is registered once; failed uploads are retried
+        # separately on the next scan without re-posting to LAMA.
+        lama_error = None
+        if lama_done:
             LOG.info("LAMA already registered for %s, skipping", run.flowcell_id)
         else:
             try:
@@ -173,22 +176,28 @@ class Uploader:
         else:
             LOG.warning("Analysis folder not found: %s", run.analysis)
 
-        def add_other(folder, name):
-            match = self._find_first(folder, name)
-            if match is None:
-                LOG.warning("No %s found under %s — skipping", name, folder)
-                return None
-            items.append(UploadItem(str(match), run.gcp_uri_base + "/other/" + name))
-            return str(match)
+        quality_metrics = self._other_item(run, run.analysis, "Quality_Metrics.csv")
+        demux_stats = self._other_item(run, run.analysis, "Demultiplex_Stats.csv")
+        unknown_barcodes = self._other_item(run, run.analysis, "Top_Unknown_Barcodes.csv")
+        sample_sheet = self._other_item(run, run.mounted, "SampleSheet.csv")
+        run_info = self._other_item(run, run.mounted, "RunInfo.xml")
+        run_parameters = self._other_item(run, run.local, "RunParameters.xml")
 
-        quality_metrics = add_other(run.analysis, "Quality_Metrics.csv")
-        add_other(run.analysis, "Demultiplex_Stats.csv")
-        unknown_barcodes = add_other(run.analysis, "Top_Unknown_Barcodes.csv")
-        for name in MOUNTED_OTHER_FILES:
-            add_other(run.mounted, name)
-        run_parameters = add_other(run.local, "RunParameters.xml")
+        items.extend((quality_metrics, demux_stats, unknown_barcodes, sample_sheet, run_info, run_parameters))
 
-        return UploadManifest(items, fastq_names, quality_metrics, unknown_barcodes, run_parameters)
+        return UploadManifest(items, fastq_names,
+                              quality_metrics.source, unknown_barcodes.source, run_parameters.source)
+
+    def _other_item(self, run, folder, name):
+        """Locate one required metadata file under ``folder`` and return its UploadItem.
+
+        These files are mandatory for downstream processing, so a missing one aborts
+        the whole flowcell (raises UploadError) rather than uploading a partial set.
+        """
+        match = self._find_first(folder, name)
+        if match is None:
+            raise UploadError("Required file {} not found under {}".format(name, folder))
+        return UploadItem(str(match), run.gcp_uri_base + "/other/" + name)
 
     def _upload_all(self, pending_items, env):
         uploaded = []
@@ -204,22 +213,27 @@ class Uploader:
                 try:
                     uploaded.append(future.result())
                     LOG.info("Uploaded %s", item.dest_uri)
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     failed.append(item.dest_uri)
                     LOG.error("Giving up on %s: %s", item.dest_uri, exc)
         return uploaded, failed
 
     def _upload_one(self, item, env):
-        def do_upload():
-            cmd = [str(UPLOAD_FILE_SCRIPT), item.source, item.dest_uri]
-            proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, env=env)
-            if proc.returncode != 0:
-                raise UploadError("upload-file.sh exit {}: {}".format(
-                    proc.returncode, (proc.stdout or "").strip()))
-            return item.dest_uri
+        return self._run_with_retry(self._attempt_upload, "upload " + item.dest_uri,
+                                    self.config.upload_max_attempts, self.config.retry_base_delay,
+                                    item, env)
 
-        return self._run_with_retry(do_upload, "upload " + item.dest_uri,
-                                    self.config.upload_max_attempts, self.config.retry_base_delay)
+    def _attempt_upload(self, item, env):
+        cmd = [str(UPLOAD_FILE_SCRIPT), item.source, item.dest_uri]
+        try:
+            proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                  universal_newlines=True, env=env, timeout=self.config.upload_timeout)
+        except subprocess.TimeoutExpired:
+            raise UploadError("upload-file.sh timed out after {:.0f}s".format(self.config.upload_timeout))
+        if proc.returncode != 0:
+            raise UploadError("upload-file.sh exit {}: {}".format(
+                proc.returncode, (proc.stdout or "").strip()))
+        return item.dest_uri
 
     @staticmethod
     def _lama_required(manifest):
@@ -232,37 +246,33 @@ class Uploader:
 
     def _post_to_lama(self, manifest):
         required = self._lama_required(manifest)
-        missing = [name for name, path, _ in required if not path]
-        if missing:
-            raise UploadError("Cannot call LAMA — missing required file(s): " + ", ".join(missing))
-
         parts = []
         for name, path, content_type in required:
             with open(path, "rb") as handle:
                 parts.append((name, os.path.basename(path), handle.read(), content_type))
         parts.append(("fastq-files", "-", ("\n".join(manifest.fastq_names) + "\n").encode("utf-8"), "text/plain"))
 
-        endpoint = self._lama_url()
         boundary, body = self._build_multipart(parts)
+        return self._run_with_retry(self._attempt_lama_post, "LAMA POST",
+                                    self.config.lama_max_attempts, self.config.retry_base_delay,
+                                    body, boundary)
 
-        def do_post():
-            request = urllib.request.Request(endpoint, data=body, method="POST")
-            request.add_header("accept", "*/*")
-            request.add_header("Content-Type", "multipart/form-data; boundary=" + boundary)
-            try:
-                with urllib.request.urlopen(request, timeout=self.config.http_timeout) as response:
-                    status = response.getcode()
-                    response.read()
-            except urllib.error.HTTPError as exc:
-                detail = exc.read().decode("utf-8", "replace")[:500]
-                raise UploadError("LAMA returned HTTP {}: {}".format(exc.code, detail))
-            except urllib.error.URLError as exc:
-                raise UploadError("LAMA request failed: {}".format(exc.reason))
-            if not (200 <= status < 300):
-                raise UploadError("LAMA returned HTTP {}".format(status))
-            return status
-
-        return self._run_with_retry(do_post, "LAMA POST", self.config.lama_max_attempts, self.config.retry_base_delay)
+    def _attempt_lama_post(self, body, boundary):
+        request = urllib.request.Request(self._lama_url(), data=body, method="POST")
+        request.add_header("accept", "*/*")
+        request.add_header("Content-Type", "multipart/form-data; boundary=" + boundary)
+        try:
+            with urllib.request.urlopen(request, timeout=self.config.http_timeout) as response:
+                status = response.getcode()
+                response.read()
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:500]
+            raise UploadError("LAMA returned HTTP {}: {}".format(exc.code, detail))
+        except urllib.error.URLError as exc:
+            raise UploadError("LAMA request failed: {}".format(exc.reason))
+        if not (200 <= status < 300):
+            raise UploadError("LAMA returned HTTP {}".format(status))
+        return status
 
     def _print_dry_run(self, manifest):
         for item in manifest.items:
@@ -305,10 +315,10 @@ class Uploader:
         buf += b"--" + boundary.encode("ascii") + b"--" + crlf
         return boundary, bytes(buf)
 
-    def _run_with_retry(self, action, description, max_attempts, base_delay):
+    def _run_with_retry(self, action, description, max_attempts, base_delay, *args):
         for attempt in range(1, max_attempts + 1):
             try:
-                return action()
+                return action(*args)
             except Exception as exc:
                 if attempt >= max_attempts:
                     LOG.error("%s failed after %d attempt(s): %s", description, attempt, exc)

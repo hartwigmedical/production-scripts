@@ -18,6 +18,7 @@ class Config(NamedTuple):
     max_parallel_uploads: int
     upload_max_attempts: int
     retry_base_delay: float
+    upload_timeout: float
     lama_base_url: str
     lama_endpoint: str
     lama_max_attempts: int
@@ -28,11 +29,7 @@ class Config(NamedTuple):
 
 
 def load_config(path=None, require_credentials=True):
-    """Load config.ini. ``path`` is for tests only; runtime reads it next to these scripts.
-
-    When ``require_credentials`` is true (a real, non-dry run) a blank server_url or
-    auth_token raises ConfigError so the run fails fast instead of retrying doomed uploads.
-    """
+    """Load config.ini. ``path`` is for tests only, prod expects the config.ini file next to this script"""
     cfg_path = Path(path).expanduser() if path else DEFAULT_CONFIG_PATH
     if not cfg_path.is_file():
         raise ConfigError(
@@ -45,6 +42,7 @@ def load_config(path=None, require_credentials=True):
         max_parallel_uploads=parser.getint("upload", "max_parallel_uploads", fallback=6),
         upload_max_attempts=parser.getint("upload", "upload_max_attempts", fallback=3),
         retry_base_delay=parser.getfloat("upload", "retry_base_delay", fallback=5.0),
+        upload_timeout=parser.getfloat("upload", "upload_timeout", fallback=3600.0),
         lama_base_url=parser.get("lama", "base_url", fallback="http://lama.prod-1").rstrip("/"),
         lama_endpoint=parser.get("lama", "lama_sequencing_endpoint", fallback="api/sequencing/sequencing-run-data").strip("/"),
         lama_max_attempts=parser.getint("lama", "lama_max_attempts", fallback=3),
@@ -54,8 +52,7 @@ def load_config(path=None, require_credentials=True):
         poll_interval=parser.getint("monitor", "poll_interval", fallback=900),
     )
     if require_credentials:
-        missing = [key for key, value in (("server_url", config.server_url),
-                                          ("auth_token", config.auth_token)) if not value]
+        missing = [key for key, value in (("server_url", config.server_url), ("auth_token", config.auth_token)) if not value]
         if missing:
             raise ConfigError("Config missing required key(s) for a real run: " + ", ".join(missing))
     return config

@@ -27,23 +27,22 @@ Uploads land in the output bucket as:
 Note: `RunParameters.xml` lives under a different runs root than the other files (`/usr/local/illumina/runs/<flowcell_folder>/RunParameters.xml`).
 
 <H3>Configuration</H3>
-All settings live in one INI file (`config.ini`), read from the same directory as `monitor.py`/`uploader.py`. Keys are grouped into `[upload]`, `[lama]`, `[paths]`, `[monitor]` and are documented inline in the file.
+All settings live in one INI file (`config.ini`), read by the `config.py` from the same directory as `monitor.py`/`uploader.py`.
 
 `config.ini` is committed **without** an auth token; set it on the instrument before a real run (it is not needed for `--dry-run`):
 ```ini
 [upload]
 auth_token = <token from the portal-api authentication service>
 ```
-A real run with a blank `server_url`/`auth_token` fails fast with a clear error rather than retrying doomed uploads.
 
 <H3>Running manually</H3>
 ```bash
 # Upload a single flowcell:
 /usr/libexec/platform-python uploader.py \
-    /usr/local/illumina/mnt/runs/<flowcell_folder>/Analysis/1/Data/Secondary_Analysis_Complete.txt
+    /usr/local/illumina/mnt/runs/<flowcell_folder>/Analysis/<analyis_number>/Data/Secondary_Analysis_Complete.txt
 
 # See what would happen without uploading (no credentials needed):
-/usr/libexec/platform-python uploader.py <secondary_file> --dry-run
+/usr/libexec/platform-python uploader.py <secondary_analysis_complete_file> --dry-run
 
 # Scan the monitored directory once, or once as a dry run:
 /usr/libexec/platform-python monitor.py [base_dir] --once
@@ -70,16 +69,10 @@ The suites use only the standard-library `unittest` module — no `pip install`,
 - `test_uploader.py` — path parsing, the flowcell-token rename, the upload manifest / dest URIs, multipart encoding, retry, resume, and LAMA status handling.
 - `test_monitor.py` — state tracking (only-mark-completed-on-success, retry of failed flowcells, dry-run writes no state).
 
-Run them on the same interpreter the service uses (do this on the instrument before enabling the service, to catch any Python 3.6 issue):
+Run them on the same interpreter the service uses (do this on the instrument before enabling the service to catch any Python 3.6 issue):
 ```bash
 # Run each suite:
-/usr/libexec/platform-python test_uploader.py
-/usr/libexec/platform-python test_monitor.py
-
-# ...or discover and run both at once:
-/usr/libexec/platform-python -m unittest discover -p 'test_*.py'
-
-# Add -v for per-test output:
 /usr/libexec/platform-python test_uploader.py -v
+/usr/libexec/platform-python test_monitor.py -v
 ```
 All tests should report `OK`. During local development any Python 3.6+ works (`python3` in place of the platform-python path).
