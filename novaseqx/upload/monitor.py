@@ -3,6 +3,7 @@
 """
 
 import argparse
+import functools
 import json
 import logging
 import sys
@@ -55,18 +56,21 @@ class Monitor:
             if previous and previous.get("status") == "completed":
                 continue
 
-            LOG.info("Found %s file: %s%s", uploader.SECONDARY_ANALYSIS_FILE, key," (retry)" if previous else " (new)")
+            LOG.info("Found %s file: %s%s", uploader.SECONDARY_ANALYSIS_FILE, key, " (retry)" if previous else " (new)")
             progress = {
-                "uploaded": (previous or {}).get("uploaded", []),
+                "uploaded": list((previous or {}).get("uploaded", [])),
                 "lama_done": (previous or {}).get("lama_done", False),
             }
+            on_progress = None if dry_run else functools.partial(self._save_progress, key, progress)
             try:
-                result = self.uploader.process(key, dry_run=dry_run, progress=progress)
+                result = self.uploader.process(key, dry_run=dry_run, progress=progress, on_progress=on_progress)
             except uploader.UploadError as exc:
                 LOG.error("Error processing %s: %s", key, exc)
-                if not dry_run:
-                    self._record(key, previous, "failed", progress, str(exc))
-                    self.save_state()
+                self._record_failure(key, previous, progress, str(exc), dry_run)
+                continue
+            except Exception as exc:  # a single bad flowcell must never kill the poll loop
+                LOG.exception("Unexpected error processing %s", key)
+                self._record_failure(key, previous, progress, "unexpected error: {}".format(exc), dry_run)
                 continue
 
             if dry_run:
@@ -102,6 +106,26 @@ class Monitor:
             "last_error": error,
             "updated": now,
         }
+
+    def _record_failure(self, key, previous, progress, error, dry_run):
+        if dry_run:
+            return
+        self._record(key, previous, "failed", progress, error)
+        self.save_state()
+
+    def _save_progress(self, key, progress):
+        # Checkpoint mid-upload progress WITHOUT bumping the run attempt count, so an
+        # interruption doesn't lose files that already uploaded. Superseded by the final
+        # completed/failed record when the run finishes.
+        entry = self.state.get(key, {})
+        entry.update({
+            "status": "in_progress",
+            "uploaded": progress.get("uploaded", []),
+            "lama_done": progress.get("lama_done", False),
+            "updated": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        })
+        self.state[key] = entry
+        self.save_state()
 
 def main(argv=None):
     parser = argparse.ArgumentParser(

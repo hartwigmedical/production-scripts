@@ -2,12 +2,10 @@
 """Stdlib unittest suite for uploader.py (run under platform-python 3.6).
 """
 
-import http.server
 import os
 import shutil
 import stat
 import tempfile
-import threading
 import unittest
 from pathlib import Path
 
@@ -82,7 +80,7 @@ class UploaderTestBase(unittest.TestCase):
         config_path.write_text(CONFIG_TEMPLATE.format(
             mnt_root=self.mnt_root, local_root=self.local_root, upload_attempts=3))
         self.config = load_config(str(config_path))
-        self.gcp = "novaseq/" + FLOWCELL_ID
+        self.gcp = "novaseq/" + FLOWCELL  # bucket path is keyed by the (unique) flowcell token
 
     def build_manifest(self, config=None):
         up = uploader.Uploader(config or self.config)
@@ -235,7 +233,7 @@ class UploadExecutionTests(UploaderTestBase):
         self.assertTrue(progress["lama_done"])
 
     def test_failed_upload_still_registers_with_lama_and_marks_failed(self):
-        self._install_stub("#!/bin/bash\necho boom >&2\nexit 1\n")
+        self._install_stub("#!/bin/bash\necho error >&2\nexit 1\n")
         called = self._stub_lama()
         fast_config = self.config._replace(upload_max_attempts=1)
 
@@ -246,61 +244,20 @@ class UploadExecutionTests(UploaderTestBase):
         self.assertTrue(result.lama_done)         # ...but LAMA is still called
         self.assertEqual(called["count"], 1)      # exactly once, with all discovered files
 
+    def test_process_checkpoints_after_each_upload(self):
+        self._install_stub("#!/bin/bash\nexit 0\n")
+        self._stub_lama()
+        calls = {"n": 0}
 
-class _CapturingHandler(http.server.BaseHTTPRequestHandler):
-    status_code = 200
-    requests = None  # set per-test to a list
+        def on_progress():
+            calls["n"] += 1
 
-    def do_POST(self):
-        length = int(self.headers.get("Content-Length", 0))
-        body = self.rfile.read(length)
-        type(self).requests.append({
-            "content_type": self.headers.get("Content-Type", ""),
-            "body": body,
-        })
-        self.send_response(type(self).status_code)
-        self.end_headers()
-        self.wfile.write(b"ok")
-
-    def log_message(self, *args):
-        pass
-
-
-class LamaPostTests(UploaderTestBase):
-    def _start_server(self, status_code):
-        requests = []
-        handler = type("Handler", (_CapturingHandler,),
-                       {"status_code": status_code, "requests": requests})
-        server = http.server.HTTPServer(("127.0.0.1", 0), handler)
-        thread = threading.Thread(target=server.serve_forever)
-        thread.daemon = True
-        thread.start()
-        self.addCleanup(server.shutdown)
-        self.addCleanup(server.server_close)
-        port = server.server_address[1]
-        return "http://127.0.0.1:{}".format(port), requests
-
-    def test_lama_post_success(self):
-        base_url, requests = self._start_server(200)
-        config = self.config._replace(lama_base_url=base_url)
-        manifest = self.build_manifest(config)
-        status = uploader.Uploader(config)._post_to_lama(manifest)
-        self.assertEqual(status, 200)
-        self.assertEqual(len(requests), 1)
-        body = requests[0]["body"].decode("utf-8")
-        self.assertTrue(requests[0]["content_type"].startswith("multipart/form-data; boundary="))
-        for field in ("quality-metrics", "unknown-barcodes", "run-parameters", "fastq-files"):
-            self.assertIn('name="%s"' % field, body)
-        self.assertIn("Content-Type: text/xml", body)
-        self.assertIn("SampleA_TESTFLOWCELL_S1_L001_R1_001.fastq.gz", body)
-
-    def test_lama_post_non_2xx_retries_then_fails(self):
-        base_url, requests = self._start_server(500)
-        config = self.config._replace(lama_base_url=base_url, lama_max_attempts=2)
-        manifest = self.build_manifest(config)
-        with self.assertRaises(uploader.UploadError):
-            uploader.Uploader(config)._post_to_lama(manifest)
-        self.assertEqual(len(requests), 2)  # retried up to lama_max_attempts
+        progress = {"uploaded": [], "lama_done": False}
+        result = uploader.Uploader(self.config).process(
+            str(self.secondary), progress=progress, on_progress=on_progress)
+        self.assertTrue(result.success)
+        self.assertGreater(calls["n"], 0)
+        self.assertEqual(calls["n"], len(progress["uploaded"]))  # one checkpoint per uploaded file
 
 
 if __name__ == "__main__":

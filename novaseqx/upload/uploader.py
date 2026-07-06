@@ -82,14 +82,18 @@ class Uploader:
     def __init__(self, config):
         self.config = config
 
-    def process(self, secondary_file, dry_run=False, progress=None):
-        """Process one Secondary_Analysis_Complete.txt; mutates ``progress`` for resume."""
+    def process(self, secondary_analysis_complete_file, dry_run=False, progress=None, on_progress=None):
+        """Process one Secondary_Analysis_Complete.txt; mutates ``progress`` for resume.
+
+        ``on_progress`` (optional, no-arg) is invoked after each file uploads so the caller
+        can checkpoint ``progress`` and survive an interruption mid-flowcell.
+        """
         if progress is None:
             progress = {"uploaded": [], "lama_done": False}
         already_uploaded = set(progress.get("uploaded") or [])
         lama_done = bool(progress.get("lama_done", False))
 
-        run = self.parse_run_paths(secondary_file)
+        run = self.parse_run_paths(secondary_analysis_complete_file)
         LOG.info("Flowcell ID: %s, Analysis: %s, flowcell token: %s",
                  run.flowcell_id, run.analysis_number, run.flowcell)
         manifest = self.build_manifest(run)
@@ -110,7 +114,7 @@ class Uploader:
         if skipped:
             LOG.info("Resuming %s: %d file(s) already uploaded, skipping them", run.flowcell_id, skipped)
 
-        uploaded, failed = self._upload_all(pending, env)
+        uploaded, failed = self._upload_all(pending, env, progress, on_progress)
         all_uploaded = sorted(already_uploaded.union(uploaded))
         progress["uploaded"] = all_uploaded
 
@@ -118,9 +122,6 @@ class Uploader:
             LOG.error("%d file(s) failed to upload for %s; the flowcell will be retried on the next scan",
                       len(failed), run.flowcell_id)
 
-        # LAMA always receives every discovered fastq (the expected manifest), regardless of
-        # whether each upload succeeded. It is registered once; failed uploads are retried
-        # separately on the next scan without re-posting to LAMA.
         lama_error = None
         if lama_done:
             LOG.info("LAMA already registered for %s, skipping", run.flowcell_id)
@@ -153,7 +154,7 @@ class Uploader:
         analysis_number = parts[-3]
         fields = flowcell_id.split("_")
         if len(fields) < 4:
-            raise UploadError("Cannot derive flowcell token from flowcell id: {}".format(flowcell_id))
+            raise UploadError("Cannot derive flowcell from flowcell id: {}".format(flowcell_id))
         flowcell = fields[3]
         if flowcell[:1] in ("A", "B"):
             flowcell = flowcell[1:]
@@ -161,8 +162,7 @@ class Uploader:
         mounted = path.parents[3]
         analysis = path.parents[1]
         local = Path(self.config.local_runs_root) / flowcell_id
-        return RunPaths(flowcell_id, analysis_number, flowcell, mounted, analysis, local,
-                        "novaseq/" + flowcell_id)
+        return RunPaths(flowcell_id, analysis_number, flowcell, mounted, analysis, local, "novaseq/" + flowcell)
 
     def build_manifest(self, run):
         items = []
@@ -199,7 +199,7 @@ class Uploader:
             raise UploadError("Required file {} not found under {}".format(name, folder))
         return UploadItem(str(match), run.gcp_uri_base + "/other/" + name)
 
-    def _upload_all(self, pending_items, env):
+    def _upload_all(self, pending_items, env, progress, on_progress):
         uploaded = []
         failed = []
         if not pending_items:
@@ -211,11 +211,16 @@ class Uploader:
             for future in as_completed(futures):
                 item = futures[future]
                 try:
-                    uploaded.append(future.result())
-                    LOG.info("Uploaded %s", item.dest_uri)
+                    dest = future.result()
                 except Exception as exc:
                     failed.append(item.dest_uri)
                     LOG.error("Giving up on %s: %s", item.dest_uri, exc)
+                    continue
+                uploaded.append(dest)
+                LOG.info("Uploaded %s", item.dest_uri)
+                progress["uploaded"].append(dest)
+                if on_progress is not None:
+                    on_progress()
         return uploaded, failed
 
     def _upload_one(self, item, env):
@@ -270,6 +275,8 @@ class Uploader:
             raise UploadError("LAMA returned HTTP {}: {}".format(exc.code, detail))
         except urllib.error.URLError as exc:
             raise UploadError("LAMA request failed: {}".format(exc.reason))
+        except OSError as exc:
+            raise UploadError("LAMA request failed: {}".format(exc))
         if not (200 <= status < 300):
             raise UploadError("LAMA returned HTTP {}".format(status))
         return status
@@ -347,13 +354,13 @@ def main(argv=None):
         LOG.error("%s", exc)
         return 2
 
-    secondary = args.secondary_analysis_file_path.rstrip("/")
+    secondary_analysis_complete_file_path = args.secondary_analysis_file_path.rstrip("/")
 
-    LOG.info("Received request for: %s", secondary)
+    LOG.info("Received request for: %s", secondary_analysis_complete_file_path)
     try:
-        result = Uploader(config).process(secondary, dry_run=args.dry_run)
+        result = Uploader(config).process(secondary_analysis_complete_file_path, dry_run=args.dry_run)
     except UploadError as exc:
-        LOG.error("Failed to process %s: %s", secondary, exc)
+        LOG.error("Failed to process %s: %s", secondary_analysis_complete_file_path, exc)
         return 1
     return 0 if result.success else 1
 

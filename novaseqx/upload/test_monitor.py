@@ -45,7 +45,7 @@ class MonitorTestBase(unittest.TestCase):
         self.addCleanup(setattr, obj, name, original)
 
     def stub_process(self, success, calls):
-        def fake(inner_self, secondary_file, dry_run=False, progress=None):
+        def fake(inner_self, secondary_file, dry_run=False, progress=None, on_progress=None):
             calls.append(secondary_file)
             if progress is not None:
                 progress["uploaded"] = ["novaseq/x/fastq/a"]
@@ -96,6 +96,31 @@ class MonitorTests(MonitorTestBase):
         self.make_service().check_once(str(self.base), dry_run=True)
         self.assertEqual(len(calls), 1)
         self.assertFalse(self.state_file.exists())
+
+    def test_unexpected_error_is_caught_and_marked_failed(self):
+        # A non-UploadError must not escape check_once and kill the poll loop.
+        def fake(inner_self, secondary_file, dry_run=False, progress=None, on_progress=None):
+            raise RuntimeError("error")
+        self._patch(uploader.Uploader, "process", fake)
+
+        service = self.make_service()
+        service.load_state()
+        service.check_once(str(self.base))  # must not raise
+
+        entry = self.read_state()[str(self.secondary)]
+        self.assertEqual(entry["status"], "failed")
+        self.assertIn("unexpected error", entry["last_error"])
+
+    def test_save_progress_checkpoints_without_incrementing_attempts(self):
+        service = self.make_service()
+        service.state = {str(self.secondary): {"status": "failed", "attempts": 2, "uploaded": []}}
+
+        service._save_progress(str(self.secondary), {"uploaded": ["a", "b"], "lama_done": False})
+
+        entry = self.read_state()[str(self.secondary)]
+        self.assertEqual(entry["status"], "in_progress")
+        self.assertEqual(entry["uploaded"], ["a", "b"])
+        self.assertEqual(entry["attempts"], 2)  # checkpoint must not bump the attempt count
 
 
 if __name__ == "__main__":
