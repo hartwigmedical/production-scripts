@@ -22,6 +22,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 UPLOAD_FILE_SCRIPT = SCRIPT_DIR / "upload-file.sh"
 
 SECONDARY_ANALYSIS_FILE = "Secondary_Analysis_Complete.txt"
+NOVASEQX_CLOUD_FOLDER = "novaseqx"
 
 class UploadError(Exception):
     pass
@@ -162,7 +163,7 @@ class Uploader:
         mounted = path.parents[3]
         analysis = path.parents[1]
         local = Path(self.config.local_runs_root) / flowcell_id
-        return RunPaths(flowcell_id, analysis_number, flowcell, mounted, analysis, local, "novaseq/" + flowcell)
+        return RunPaths(flowcell_id, analysis_number, flowcell, mounted, analysis, local, NOVASEQX_CLOUD_FOLDER + "/" + flowcell)
 
     def build_manifest(self, run):
         items = []
@@ -185,8 +186,7 @@ class Uploader:
 
         items.extend((quality_metrics, demux_stats, unknown_barcodes, sample_sheet, run_info, run_parameters))
 
-        return UploadManifest(items, fastq_names,
-                              quality_metrics.source, unknown_barcodes.source, run_parameters.source)
+        return UploadManifest(items, fastq_names, quality_metrics.source, unknown_barcodes.source, run_parameters.source)
 
     def _other_item(self, run, folder, name):
         """Locate one required metadata file under ``folder`` and return its UploadItem.

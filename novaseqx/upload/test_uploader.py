@@ -22,19 +22,19 @@ server_url = https://upload.example/test
 auth_token = test-token
 max_parallel_uploads = 4
 upload_max_attempts = {upload_attempts}
-retry_base_delay = 0
+retry_base_delay_seconds = 0
 
 [lama]
 base_url = http://lama.invalid
 lama_max_attempts = 2
-http_timeout = 5
+http_timeout_seconds = 5
 
 [paths]
 mnt_runs_root = {mnt_root}
 local_runs_root = {local_root}
 
 [monitor]
-poll_interval = 900
+poll_interval_seconds = 900
 """
 
 
@@ -80,7 +80,7 @@ class UploaderTestBase(unittest.TestCase):
         config_path.write_text(CONFIG_TEMPLATE.format(
             mnt_root=self.mnt_root, local_root=self.local_root, upload_attempts=3))
         self.config = load_config(str(config_path))
-        self.gcp = "novaseq/" + FLOWCELL  # bucket path is keyed by the (unique) flowcell token
+        self.gcp = "novaseqx/" + FLOWCELL  # bucket path is keyed by the (unique) flowcell token
 
     def build_manifest(self, config=None):
         up = uploader.Uploader(config or self.config)
