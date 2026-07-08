@@ -41,15 +41,15 @@ def load_config(path=None, require_credentials=True):
         auth_token=parser.get("upload", "auth_token", fallback="").strip(),
         max_parallel_uploads=parser.getint("upload", "max_parallel_uploads", fallback=6),
         upload_max_attempts=parser.getint("upload", "upload_max_attempts", fallback=3),
-        retry_base_delay=parser.getfloat("upload", "retry_base_delay", fallback=5.0),
-        upload_timeout=parser.getfloat("upload", "upload_timeout", fallback=3600.0),
+        retry_base_delay=parser.getfloat("upload", "retry_base_delay_seconds", fallback=5.0),
+        upload_timeout=parser.getfloat("upload", "upload_timeout_seconds", fallback=3600.0),
         lama_base_url=parser.get("lama", "base_url", fallback="http://lama.prod-1").rstrip("/"),
         lama_endpoint=parser.get("lama", "lama_sequencing_endpoint", fallback="api/sequencing/sequencing-run-data").strip("/"),
         lama_max_attempts=parser.getint("lama", "lama_max_attempts", fallback=3),
-        http_timeout=parser.getfloat("lama", "http_timeout", fallback=300.0),
+        http_timeout=parser.getfloat("lama", "http_timeout_seconds", fallback=300.0),
         mnt_runs_root=parser.get("paths", "mnt_runs_root", fallback="/usr/local/illumina/mnt/runs").rstrip("/"),
         local_runs_root=parser.get("paths", "local_runs_root", fallback="/usr/local/illumina/runs").rstrip("/"),
-        poll_interval=parser.getint("monitor", "poll_interval", fallback=900),
+        poll_interval=parser.getint("monitor", "poll_interval_seconds", fallback=900),
     )
     if require_credentials:
         missing = [key for key, value in (("server_url", config.server_url), ("auth_token", config.auth_token)) if not value]
