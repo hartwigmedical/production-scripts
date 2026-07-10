@@ -24,6 +24,10 @@ UPLOAD_FILE_SCRIPT = SCRIPT_DIR / "upload-file.sh"
 SECONDARY_ANALYSIS_FILE = "Secondary_Analysis_Complete.txt"
 NOVASEQX_CLOUD_FOLDER = "novaseqx"
 
+
+def _noop(*args, **kwargs):
+    return None
+
 class UploadError(Exception):
     pass
 
@@ -83,7 +87,7 @@ class Uploader:
     def __init__(self, config):
         self.config = config
 
-    def process(self, secondary_analysis_complete_file, dry_run=False, progress=None, on_progress=None):
+    def process(self, secondary_analysis_complete_file, dry_run=False, progress=None, on_progress=_noop):
         """Process one Secondary_Analysis_Complete.txt; mutates ``progress`` for resume.
 
         ``on_progress`` (optional, no-arg) is invoked after each file uploads so the caller
@@ -219,8 +223,7 @@ class Uploader:
                 uploaded.append(dest)
                 LOG.info("Uploaded %s", item.dest_uri)
                 progress["uploaded"].append(dest)
-                if on_progress is not None:
-                    on_progress()
+                on_progress()
         return uploaded, failed
 
     def _upload_one(self, item, env):

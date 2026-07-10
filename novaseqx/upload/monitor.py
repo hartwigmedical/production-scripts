@@ -18,6 +18,11 @@ LOG = logging.getLogger("novaseqx.monitor")
 SCRIPT_DIR = Path(__file__).resolve().parent
 STATE_FILE = SCRIPT_DIR / ".processed_analysis_files.json"
 
+
+def _noop(*args, **kwargs):
+    return None
+
+
 class Monitor:
     """Scans a directory for finished conversions and uploads them, tracking the state."""
 
@@ -50,6 +55,8 @@ class Monitor:
             LOG.error("Base directory does not exist: %s", base_dir)
             return
 
+        persist = _noop if dry_run else self.save_state
+
         for path in sorted(base.rglob(uploader.SECONDARY_ANALYSIS_FILE)):
             key = str(path)
             previous = self.state.get(key)
@@ -61,24 +68,21 @@ class Monitor:
                 "uploaded": list((previous or {}).get("uploaded", [])),
                 "lama_done": (previous or {}).get("lama_done", False),
             }
-            on_progress = None if dry_run else functools.partial(self._save_progress, key, progress)
+            on_progress = _noop if dry_run else functools.partial(self._save_progress, key, progress)
             try:
                 result = self.uploader.process(key, dry_run=dry_run, progress=progress, on_progress=on_progress)
             except uploader.UploadError as exc:
                 LOG.error("Error processing %s: %s", key, exc)
-                self._record_failure(key, previous, progress, str(exc), dry_run)
+                self._record_failure(key, previous, progress, str(exc), persist)
                 continue
             except Exception as exc:  # a single bad flowcell must never kill the poll loop
                 LOG.exception("Unexpected error processing %s", key)
-                self._record_failure(key, previous, progress, "unexpected error: {}".format(exc), dry_run)
-                continue
-
-            if dry_run:
+                self._record_failure(key, previous, progress, "unexpected error: {}".format(exc), persist)
                 continue
 
             status = "completed" if result.success else "failed"
             self._record(key, previous, status, progress, result.error)
-            self.save_state()
+            persist()
             if result.success:
                 LOG.info("Completed %s", key)
             else:
@@ -107,11 +111,9 @@ class Monitor:
             "updated": now,
         }
 
-    def _record_failure(self, key, previous, progress, error, dry_run):
-        if dry_run:
-            return
+    def _record_failure(self, key, previous, progress, error, persist):
         self._record(key, previous, "failed", progress, error)
-        self.save_state()
+        persist()
 
     def _save_progress(self, key, progress):
         # Checkpoint mid-upload progress WITHOUT bumping the run attempt count, so an
