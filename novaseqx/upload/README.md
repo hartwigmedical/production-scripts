@@ -56,6 +56,7 @@ auth_token = <token from the portal-api authentication service>
 - Retries are two-layered: each `upload-file.sh` call and the LAMA POST retry with exponential backoff within a run; a `failed` flowcell is re-attempted on the next poll and **skips files already uploaded** (and skips LAMA if it already succeeded).
 
 <H3>Starting the service</H3>
+Test credentials by running the `monitor.py` with --check-credentials to ensure the token is valid.
 The unit assumes all scripts live in `/usr/local/hartwig/fastq_upload`. It must be placed in `/etc/systemd/system` on the NovaSeq X (SELinux enforces this). Then:
 ```bash
 sudo systemctl daemon-reload
