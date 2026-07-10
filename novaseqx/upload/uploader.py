@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -108,11 +109,7 @@ class Uploader:
             self._print_dry_run(manifest)
             return UploadResult(True, len(manifest.items), sorted(already_uploaded), 0, 0, lama_done, None)
 
-        env = os.environ.copy()
-        if self.config.server_url:
-            env["SERVER_URL"] = self.config.server_url
-        if self.config.auth_token:
-            env["AUTH_TOKEN"] = self.config.auth_token
+        env = self._upload_env()
 
         pending = [item for item in manifest.items if item.dest_uri not in already_uploaded]
         skipped = len(manifest.items) - len(pending)
@@ -242,6 +239,34 @@ class Uploader:
             raise UploadError("upload-file.sh exit {}: {}".format(
                 proc.returncode, (proc.stdout or "").strip()))
         return item.dest_uri
+
+    def _upload_env(self):
+        env = os.environ.copy()
+        if self.config.server_url:
+            env["SERVER_URL"] = self.config.server_url
+        if self.config.auth_token:
+            env["AUTH_TOKEN"] = self.config.auth_token
+        return env
+
+    def verify_upload_credentials(self):
+        """Upload a tiny test file to confirm the upload-server URL + token actually work.
+
+        Uploads to a fixed dest (overwritten each call, so at most one small object is left
+        behind). Raises UploadError if it fails after the normal retries.
+        """
+        fd, tmp_path = tempfile.mkstemp(prefix="startup_check_", suffix=".txt")
+        try:
+            with os.fdopen(fd, "w") as handle:
+                handle.write("fastq_upload startup credential check {}\n".format(
+                    time.strftime("%Y-%m-%dT%H:%M:%S")))
+            dest = NOVASEQX_CLOUD_FOLDER + "/_startup_check/startup_check.txt"
+            self._upload_one(UploadItem(tmp_path, dest), self._upload_env())
+            LOG.info("Startup credential check OK — test file uploaded to %s", dest)
+        finally:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
 
     @staticmethod
     def _lama_required(manifest):

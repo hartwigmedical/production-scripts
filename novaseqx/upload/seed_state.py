@@ -48,7 +48,9 @@ def main(argv=None):
     state = {}
     if STATE_FILE.is_file():
         with open(str(STATE_FILE)) as handle:
-            state = json.load(handle)
+            content = handle.read().strip()
+        if content:  # tolerate a pre-created empty file
+            state = json.loads(content)
 
     now = time.strftime("%Y-%m-%dT%H:%M:%S")
     added = skipped = 0
@@ -64,10 +66,9 @@ def main(argv=None):
         LOG.info("Dry run: would seed %d new completed (%d already tracked); not writing", added, skipped)
         return 0
 
-    tmp = STATE_FILE.parent / (STATE_FILE.name + ".tmp")
-    with open(str(tmp), "w") as handle:
+    # Written in place (no temp file); the state file is expected to already exist.
+    with open(str(STATE_FILE), "w") as handle:
         json.dump(state, handle, indent=2, sort_keys=True)
-    tmp.replace(STATE_FILE)
     LOG.info("Seeded %d flowcell(s) as completed (%d already tracked) into %s", added, skipped, STATE_FILE)
     return 0
 

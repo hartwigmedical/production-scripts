@@ -44,10 +44,8 @@ class Monitor:
         return self.state
 
     def save_state(self):
-        tmp = self.state_file.parent / (self.state_file.name + ".tmp")
-        with open(str(tmp), "w") as handle:
+        with open(str(self.state_file), "w") as handle:
             json.dump(self.state, handle, indent=2, sort_keys=True)
-        tmp.replace(self.state_file)
 
     def check_once(self, base_dir, dry_run=False):
         base = Path(base_dir)
@@ -160,6 +158,13 @@ def main(argv=None):
         LOG.info("Scanning %s once for %s files%s", base_dir, uploader.SECONDARY_ANALYSIS_FILE, " (dry run)" if args.dry_run else "")
         service.check_once(base_dir, dry_run=args.dry_run)
         return 0
+
+    # Verify the upload-server URL + token actually work before entering the poll loop.
+    try:
+        service.uploader.verify_upload_credentials()
+    except uploader.UploadError as exc:
+        LOG.error("Startup credential check failed, not starting: %s", exc)
+        return 1
 
     service.run(base_dir)
 
