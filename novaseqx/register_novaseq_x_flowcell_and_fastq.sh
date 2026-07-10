@@ -54,7 +54,7 @@ fi
 
 flowcell_data=$(
   printf '{"name": "%s", "index": "%s", "flowcell_id": "%s", "status": "Converted", "sequencer_id": 18, "q30": %s, "yld": %s, "undet_rds": %s, "undet_rds_p": %s, "undet_rds_p_pass": "%s", "bucket": "null", "convertTime": "%s", "sequencer": "%s"}' \
-         "${name}" "${sequencing_run}" "${sequencing_run}" "${q30_average}" "${yield_total}" "${yield_undetermined}" "${percentage_undetermined}" "${flowcell_status}" "${current_datetime}" "${sequencer}"
+         "${name}" "N/A" "${sequencing_run}" "${q30_average}" "${yield_total}" "${yield_undetermined}" "${percentage_undetermined}" "${flowcell_status}" "${current_datetime}" "${sequencer}"
 )
 curl --silent --show-error -H "Content-Type: application/json" -H "Accept: application/json" -X POST "${API_URL}/flowcells" --data "${flowcell_data}" || die "cURL POST of Flowcell failed"
 info "Posted flowcell ${name} API"
