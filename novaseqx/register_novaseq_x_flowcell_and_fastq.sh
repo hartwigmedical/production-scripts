@@ -9,7 +9,7 @@ FASTQ_BUCKET="fastq-input-prod-1"
 if [[ -z "$1" || $1 == "-h" || $1 == "--help" ]]; then
     echo "---"
     echo " Usage: ${SCRIPT} <sequencing_run>"
-    echo "        ${SCRIPT} 20251031_LH00984_0004_A23CLVJLT3"
+    echo "        ${SCRIPT} 23CLVJLT3"
     echo "---"
     exit 1
 fi
@@ -18,23 +18,22 @@ current_datetime=$(date '+%Y-%m-%dT%H:%M:%S')
 
 sequencing_run=${1}
 
-sequencer=$(echo ${sequencing_run} | cut -d_ -f2)
-run=$(echo ${sequencing_run} | cut -d_ -f3)
-flowcell=$(echo ${sequencing_run} | cut -d_ -f4 | sed 's/^.\{1\}//')
+sequencer="LH00984"
+flowcell=$(echo ${sequencing_run})
 
 if [[ ! $(hmf_api_get "flowcells?flowcell_id=${flowcell}" | jq -r) == "[]" ]]; then
     die "Flowcell already registered, look into script reconvert_novaseq_x_flowcell_and_fastq.sh"
 fi
 
-runinfo_file="gs://${FASTQ_BUCKET}/novaseq/${sequencing_run}/other/RunInfo.xml"
+runinfo_file="gs://${FASTQ_BUCKET}/novaseqx/${sequencing_run}/other/RunInfo.xml"
 if [[ $(gsutil -q stat ${runinfo_file} || echo 1) == 1 ]] ; then
     die "Not all files have been copied for flowcell. Try again later."
 fi
 
-samplesheet_file="gs://${FASTQ_BUCKET}/novaseq/${sequencing_run}/other/SampleSheet.csv"
+samplesheet_file="gs://${FASTQ_BUCKET}/novaseqx/${sequencing_run}/other/SampleSheet.csv"
 name=$(gsutil cat ${samplesheet_file} | grep RunName | cut -d, -f2)
 
-metrics_file="gs://${FASTQ_BUCKET}/novaseq/${sequencing_run}/other/Quality_Metrics.csv"
+metrics_file="gs://${FASTQ_BUCKET}/novaseqx/${sequencing_run}/other/Quality_Metrics.csv"
 metrics_data=$(gsutil cat ${metrics_file} | tail -n +2)
 
 seq_platform_data=$(hmf_api_get "platforms/7") # Novaseq X id = 7.
@@ -55,20 +54,20 @@ fi
 
 flowcell_data=$(
   printf '{"name": "%s", "index": "%s", "flowcell_id": "%s", "status": "Converted", "sequencer_id": 18, "q30": %s, "yld": %s, "undet_rds": %s, "undet_rds_p": %s, "undet_rds_p_pass": "%s", "bucket": "null", "convertTime": "%s", "sequencer": "%s"}' \
-         "${name}" "${run}" "${flowcell}" "${q30_average}" "${yield_total}" "${yield_undetermined}" "${percentage_undetermined}" "${flowcell_status}" "${current_datetime}" "${sequencer}"
+         "${name}" "N/A" "${sequencing_run}" "${q30_average}" "${yield_total}" "${yield_undetermined}" "${percentage_undetermined}" "${flowcell_status}" "${current_datetime}" "${sequencer}"
 )
 curl --silent --show-error -H "Content-Type: application/json" -H "Accept: application/json" -X POST "${API_URL}/flowcells" --data "${flowcell_data}" || die "cURL POST of Flowcell failed"
 info "Posted flowcell ${name} API"
 
-flowcell_id=$(hmf_api_get "flowcells?flowcell_id=${flowcell}" | jq -r '.[].id')
+flowcell_id=$(hmf_api_get "flowcells?flowcell_id=${sequencing_run}" | jq -r '.[].id')
 for x in {1..8}
 do
     lane_data=$(
     printf '{"name": "%s", "flowcell_id": "%s", "q30_pass": "null", "yld_pass": "null", "yld": "null", "q30": "null"}' \
-           "L00${x}" "${flowcell_id}"
+           "L00${x}" "${sequencing_run}"
     )
     curl --silent --show-error -H "Content-Type: application/json" -H "Accept: application/json" -X POST "${API_URL}/lanes" --data "${lane_data}" || die "cURL POST of Lane failed"
-    info "Posted lane L00${x} for flowcell ${flowcell_id} into API"
+    info "Posted lane L00${x} for flowcell ${sequencing_run} into API"
 done
 
 echo "${metrics_data}" | while read first_line; read second_line
@@ -94,7 +93,7 @@ do
             qc_pass="false"
         fi
 
-        bucket_path="${FASTQ_BUCKET}/novaseq/${sequencing_run}/fastq"
+        bucket_path="${FASTQ_BUCKET}/novaseqx/${sequencing_run}/fastq"
         filename_r1=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R1_001.fastq.gz" | cut -d/ -f7)
         filename_r2=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R2_001.fastq.gz" | cut -d/ -f7)
 
