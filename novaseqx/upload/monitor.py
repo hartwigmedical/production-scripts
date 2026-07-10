@@ -169,7 +169,6 @@ def main(argv=None):
         service.check_once(base_dir, dry_run=args.dry_run)
         return 0
 
-    # Verify the upload-server URL + token actually work before entering the poll loop.
     try:
         service.uploader.verify_upload_credentials()
     except uploader.UploadError as exc:
