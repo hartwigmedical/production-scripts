@@ -6,8 +6,7 @@ FASTQ_BUCKET="fastq-input-prod-1"
 sequencing_run=$1
 sample_barcode=$2
 
-flowcell=$(echo ${sequencing_run} | cut -d_ -f4 | sed 's/^.\{1\}//')
-flowcell_id=$(hmf_api_get "flowcells?flowcell_id=${flowcell}" | jq -r '.[].id')
+flowcell_id=$(hmf_api_get "flowcells?flowcell_id=${sequencing_run}" | jq -r '.[].id')
 
 metrics_file="gs://${FASTQ_BUCKET}/novaseq/${sequencing_run}/other/Quality_Metrics.csv"
 metrics_data=$(gsutil cat ${metrics_file} | tail -n +2)
@@ -36,7 +35,7 @@ do
             qc_pass="false"
         fi
 
-        bucket_path="${FASTQ_BUCKET}/novaseq/${sequencing_run}/fastq"
+        bucket_path="${FASTQ_BUCKET}/novaseqx/${sequencing_run}/fastq"
         filename_r1=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R1_001.fastq.gz" | cut -d/ -f7)
         filename_r2=$(gsutil ls "gs://${bucket_path}/${sample_barcode}_*_L00${lane}_R2_001.fastq.gz" | cut -d/ -f7)
 

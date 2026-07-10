@@ -3,7 +3,7 @@
 source message_functions || exit 1
 
 TMP_ALL="/tmp/tmp_all.txt"
-GCP_ALL="gs://fastq-input-prod-1/novaseq"
+GCP_ALL="gs://fastq-input-prod-1/novaseqx"
 TMP_PROCESSED="/tmp/tmp_processed.txt"
 GCP_PROCESSED="gs://hmf-ops-data/ops/novaseqx/processed.txt"
 
