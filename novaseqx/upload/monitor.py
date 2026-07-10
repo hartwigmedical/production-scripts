@@ -136,6 +136,8 @@ def main(argv=None):
     parser.add_argument("--dry-run", action="store_true",
                         help="Show what would happen; make no uploads/API calls or state writes. "
                              "Implies a single pass.")
+    parser.add_argument("--check-credentials", action="store_true",
+                        help="Upload a test file to verify the upload-server URL + token, then exit.")
     args = parser.parse_args(argv)
 
     uploader.setup_logging()
@@ -144,6 +146,14 @@ def main(argv=None):
     except ConfigError as exc:
         LOG.error("%s", exc)
         return 2
+
+    if args.check_credentials:
+        try:
+            uploader.Uploader(config).verify_upload_credentials()
+        except uploader.UploadError as exc:
+            LOG.error("Credential check failed: %s", exc)
+            return 1
+        return 0
 
     base_dir = (args.base_dir or config.mnt_runs_root).rstrip("/")
     if not base_dir:
