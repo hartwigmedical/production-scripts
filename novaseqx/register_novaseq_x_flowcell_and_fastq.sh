@@ -64,7 +64,7 @@ for x in {1..8}
 do
     lane_data=$(
     printf '{"name": "%s", "flowcell_id": "%s", "q30_pass": "null", "yld_pass": "null", "yld": "null", "q30": "null"}' \
-           "L00${x}" "${sequencing_run}"
+           "L00${x}" "${flowcell_id}"
     )
     curl --silent --show-error -H "Content-Type: application/json" -H "Accept: application/json" -X POST "${API_URL}/lanes" --data "${lane_data}" || die "cURL POST of Lane failed"
     info "Posted lane L00${x} for flowcell ${sequencing_run} into API"
