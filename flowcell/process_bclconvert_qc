@@ -49,7 +49,7 @@ function main() {
         info="${info},${flowcell_name},${flowcell_status}"
 
         if [[ "${flowcell_name}" == NX* ]]; then
-            FORENSICS_BUCKET="fastq-input-prod-1/novaseq"
+            FORENSICS_BUCKET="fastq-input-prod-1/novaseqx"
             set_required_files "NX"
         elif [[ "${flowcell_name}" == NO* ]]; then
             FORENSICS_BUCKET="bcl-forensics-prod-1"
