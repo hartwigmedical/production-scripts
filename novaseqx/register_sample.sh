@@ -8,7 +8,7 @@ sample_barcode=$2
 
 flowcell_id=$(hmf_api_get "flowcells?flowcell_id=${sequencing_run}" | jq -r '.[].id')
 
-metrics_file="gs://${FASTQ_BUCKET}/novaseq/${sequencing_run}/other/Quality_Metrics.csv"
+metrics_file="gs://${FASTQ_BUCKET}/novaseqx/${sequencing_run}/other/Quality_Metrics.csv"
 metrics_data=$(gsutil cat ${metrics_file} | tail -n +2)
 metrics_data=$(echo "${metrics_data}" | grep "${sample_barcode}")
 
