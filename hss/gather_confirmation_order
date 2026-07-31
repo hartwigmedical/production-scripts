@@ -70,8 +70,8 @@ tmp_repo_file="${out_path}/tmp_report.txt"
     while read -r line; do
         barc=$(echo "${line}" | cut -f1)
         lama_seq_result_json=$(curl -s -X 'GET' "http://lama.prod-1/api/sequencing/summarized-results?barcodes=${barc}" -H 'accept: */*')
-        q30M=$(echo "${lama_seq_result_json}" | jq -r '.[].q30 * 100' )
-        yldM=$(echo "${lama_seq_result_json}" | jq -r '.[].totalYield / 1000')
+        q30M=$(echo "${lama_seq_result_json}" | jq -r '.[].q30' )
+        yldM=$(echo "${lama_seq_result_json}" | jq -r '.[].totalYield')
         yldR=$(echo "${lama_data}" | jq -r --arg barcode "${barc}" '.servicesSamples | .[] | select( .barcode == $barcode ) | .requestedGBase * 1000')
         name=$(echo "${lama_data}" | jq -r --arg barcode "${barc}" '.servicesSamples | .[] | select( .barcode == $barcode ) | .sampleName')
         date=$(echo "${lama_data}" | jq -r --arg barcode "${barc}" '.servicesSamples | .[] | select( .barcode == $barcode ) | .arrivalDate')
