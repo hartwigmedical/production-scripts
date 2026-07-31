@@ -82,7 +82,7 @@ tmp_repo_file="${out_path}/tmp_report.txt"
     done < <(echo "${api_samples_json}" | jq -rc '.[] | [.barcode,.q30,.yld_req,.yld,.name] | @tsv')
 } >> "${tmp_repo_file}"
 
-total_yield_gbase=$(awk '{sum+=$4;} END{printf "%.0f", sum / 10000;}' "${tmp_repo_file}")
+total_yield_gbase=$(awk '{sum+=$4;} END{printf "%.0f", sum / 1000;}' "${tmp_repo_file}")
 
 printf '%s\n' " # Project metadata table for report (${pdf_name})" \
 "${r_name}" "${r_mail}" "${d_mail}"  "${confirmation_order}" \
