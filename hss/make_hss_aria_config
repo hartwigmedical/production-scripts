@@ -49,5 +49,9 @@ do
         echo "  dir=${hss_confirmation_order}_${barcode}" >> ${out_file}
         echo "  out=${file_name}" >> ${out_file}
         echo "  checksum=md5=${md5_sum}" >> ${out_file}
+        echo "" >> ${out_file}
     done
 done
+
+echo ""
+echo "  upload_files_to_nextcloud_research ${out_file}"
