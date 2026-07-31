@@ -47,8 +47,6 @@ d_mail=$(echo "${lama_data}" | jq -r '[ .dataContacts | .[] | .email ] | join(";
 info "Querying HMF API to get sample status"
 api samples "${confirmation_order}" submission > "${samp_file}"
 api_samples_json=$(hmf_api_get "samples?submission=${confirmation_order}")
-
-total_yield_gbase=$(echo "${api_samples_json}" | jq '[.[].yld] | add / 1000000000 | floor')
 echo "${api_samples_json}" > "${samp_json}"
 
 # Get run info from HMF API
@@ -68,13 +66,12 @@ rm -f "${repo_file}"
 pdf_name="${confirmation_order}.pdf"
 
 tmp_repo_file="${out_path}/tmp_report.txt"
-
 {
     while read -r line; do
         barc=$(echo "${line}" | cut -f1)
         lama_seq_result_json=$(curl -s -X 'GET' "http://lama.prod-1/api/sequencing/summarized-results?barcodes=${barc}" -H 'accept: */*')
-        q30M=$(echo "${lama_seq_result_json}" | jq -r '.[].q30 | round * 0.01' )
-        yldM=$(echo "${lama_seq_result_json}" | jq -r '.[].totalYield / 1000000 | round * 0.01')
+        q30M=$(echo "${lama_seq_result_json}" | jq -r '.[].q30 * 100 | round * 0.00' )
+        yldM=$(echo "${lama_seq_result_json}" | jq -r '.[].totalYield / 1000 | round * 0.00')
         yldR=$(echo "${lama_data}" | jq -r --arg barcode "${barc}" '.servicesSamples | .[] | select( .barcode == $barcode ) | .requestedGBase * 1000')
         name=$(echo "${lama_data}" | jq -r --arg barcode "${barc}" '.servicesSamples | .[] | select( .barcode == $barcode ) | .sampleName')
         date=$(echo "${lama_data}" | jq -r --arg barcode "${barc}" '.servicesSamples | .[] | select( .barcode == $barcode ) | .arrivalDate')
@@ -82,10 +79,13 @@ tmp_repo_file="${out_path}/tmp_report.txt"
     done < <(echo "${api_samples_json}" | jq -rc '.[] | [.barcode,.q30,.yld_req,.yld,.name] | @tsv')
 } >> "${tmp_repo_file}"
 
+total_yield_gbase=$(awk '{sum+=$4;} END{print sum;}' "${tmp_repo_file}")
+
 printf '%s\n' " # Project metadata table for report (${pdf_name})" \
 "${r_name}" "${r_mail}" "${d_mail}"  "${confirmation_order}" \
 "${api_count}" "${p_type}" "${total_yield_gbase} GBase" \
 "" "# Sample table for report:" >> "${repo_file}"
+cat "${tmp_repo_file}" >> "${repo_file}"
 
 {
     echo "#           Date = ${date_string}"
