@@ -76,8 +76,8 @@ tmp_repo_file="${out_path}/tmp_report.txt"
         name=$(echo "${lama_data}" | jq -r --arg barcode "${barc}" '.servicesSamples | .[] | select( .barcode == $barcode ) | .sampleName')
         date=$(echo "${lama_data}" | jq -r --arg barcode "${barc}" '.servicesSamples | .[] | select( .barcode == $barcode ) | .arrivalDate')
         q30M=$(printf "%'.1f\n" "${q30M}") # q30 with one decimal
-        yldR=$(printf "%'.f\n" "${yldR}") # yield without decimal
-        yldM=$(printf "%'.f\n" "${yldM}") # yield without decimal
+        yldR=$(printf "%.f\n" "${yldR}") # yield without decimal
+        yldM=$(printf "%.f\n" "${yldM}") # yield without decimal
         echo -e "${barc}\t${q30M}\t${yldR}\t${yldM}\t${name}\t${date}"
     done < <(echo "${api_samples_json}" | jq -rc '.[] | [.barcode,.q30,.yld_req,.yld,.name] | @tsv')
 } >> "${tmp_repo_file}"
