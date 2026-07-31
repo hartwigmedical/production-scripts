@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+source secrets_functions || exit 1
+
+secret_name="gcp-hmf-share-u-hmf-share"
+billing_project="hmf-ops"
+service_account="hmf-ops@hmf-ops.iam.gserviceaccount.com"
+
+base_path="gs://fastq-input-prod-1/novaseqx/*/fastq/"
+base_out="/data/submissions/"
+
+parse_md5sums_from_file_listing () {
+    local file_listing_info=$1
+    # Hexadecimal to base64 from https://gist.github.com/analogist/f74d28b5f00ae3db0cd7f0870f7bad90
+    echo "${file_listing_info}" | awk 'BEGIN { \
+    decode = "base64 -d | xxd -p | tr -d \"\\n\"";} \
+    function basename(file) {sub(".*/", "", file); sub("\:$", "", file); return file} \
+    /Hash \(md5\)/ { print $3 | decode; close(decode); \
+    printf "  %s\n",basename(gs_url) } \
+    /^gs:\/\// { gs_url = $0 }'
+}
+
+current_gcp_account=$(gcloud config get-value account)
+[[ "${current_gcp_account}" == "${service_account}" ]] || die "Not logged in as ${service_account}"
+secret=$(get_secret_from_secret_manager "${secret_name}") || die "Unable to retrieve secret (${secret_name})"
+
+hss_confirmation_order=$1
+
+out_file="${base_out}${hss_confirmation_order}/${hss_confirmation_order}.aria.txt"
+
+confirmation_order_json=$(curl -s -X 'GET' -H 'accept: */*' "http://lama.prod-1/api/hss/order-confirmation/${hss_confirmation_order}")
+
+echo "" > ${out_file} # Ensure file is empty
+for barcode in $(echo ${confirmation_order_json} | jq -r '.servicesSamples | .[].barcode')
+do
+    file_selection=$(gsutil ls "${base_path}${barcode}*")
+    for share_file in ${file_selection[@]}; do
+        info "Creating signed URL for files ${share_file}"
+        signurl_payload=$(gsutil signurl -r europe-west4 -b "${billing_project}" -d 7d <(echo "${secret}") "${share_file}")
+        line=$(echo "$signurl_payload" | grep -v 'URL')
+        gs_url=$(echo "$line" | cut -f1)
+        signed_url=$(echo "$line" | cut -f4)
+        file_name=$(basename "${gs_url}")
+        gs_file_info=$(gsutil ls -L ${gs_url})
+        md5_sum=$(parse_md5sums_from_file_listing "$gs_file_info" | cut -d" " -f1)
+
+        echo "${signed_url}" >> ${out_file}
+        echo "  dir=${hss_confirmation_order}_${barcode}" >> ${out_file}
+        echo "  out=${file_name}" >> ${out_file}
+        echo "  checksum=md5=${md5_sum}" >> ${out_file}
+    done
+done
