@@ -24,6 +24,7 @@ current_gcp_account=$(gcloud config get-value account)
 [[ "${current_gcp_account}" == "${service_account}" ]] || die "Not logged in as ${service_account}"
 secret=$(get_secret_from_secret_manager "${secret_name}") || die "Unable to retrieve secret (${secret_name})"
 
+# Start of script
 hss_confirmation_order=$1
 
 out_file="${base_out}${hss_confirmation_order}/${hss_confirmation_order}.aria.txt"
