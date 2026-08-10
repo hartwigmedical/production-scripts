@@ -34,7 +34,7 @@ confirmation_order_json=$(curl -s -X 'GET' -H 'accept: */*' "http://lama.prod-1/
 echo "" > ${out_file} # Ensure file is empty
 for barcode in $(echo ${confirmation_order_json} | jq -r '.servicesSamples | .[].barcode')
 do
-    file_selection=$(gsutil ls "${base_path}${barcode}*")
+    file_selection=$(gsutil ls "${base_path}${barcode}_*")
     for share_file in ${file_selection[@]}; do
         info "Creating signed URL for files ${share_file}"
         signurl_payload=$(gsutil signurl -r europe-west4 -b "${billing_project}" -d 7d <(echo "${secret}") "${share_file}")
